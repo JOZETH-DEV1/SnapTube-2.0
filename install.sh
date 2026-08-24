@@ -1,14 +1,14 @@
 #!/bin/bash
 echo "======================================"
-echo "🚀 Instalando Snaptube Local en Termux"
+echo "🚀 Instalando JozethDev Premium en Termux"
 echo "======================================"
 sleep 1
 
 # Actualizar e instalar dependencias del sistema
 echo "[1/4] Actualizando sistema..."
 pkg update -y && pkg upgrade -y
-echo "[2/4] Instalando Python y FFmpeg (necesario para extraer audio)..."
-pkg install python ffmpeg git -y
+echo "[2/4] Instalando Python, FFmpeg y Node.js (necesario para yt-dlp)..."
+pkg install python ffmpeg nodejs git -y
 
 # Clonar o actualizar el repositorio
 echo "[3/4] Descargando la aplicación..."
@@ -22,7 +22,7 @@ else
 fi
 
 # Instalar librerías de Python
-echo "[4/4] Instalando dependencias de Python..."
+echo "[4/4] Instalando librerías de Python..."
 pip install flask yt-dlp
 
 echo "======================================"
