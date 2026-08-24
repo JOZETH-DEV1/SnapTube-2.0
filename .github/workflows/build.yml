@@ -19,10 +19,16 @@ jobs:
               distribution: 'zulu'
               java-version: '17'
 
+          - name: Configurar Flutter
+            uses: subosito/flutter-action@v2
+            with:
+              flutter-version: '3.44.8'
+              channel: 'stable'
+
           - name: Configurar Python
             uses: actions/setup-python@v5
             with:
-              python-version: '3.11'
+              python-version: '3.14'
 
           - name: Instalar Flet
             run: |
@@ -30,7 +36,7 @@ jobs:
               pip install flet yt-dlp
 
           - name: Compilar APK
-            run: yes | flet build apk
+            run: flet build apk
 
           - name: Entregar el APK final
             uses: actions/upload-artifact@v4
