@@ -74,10 +74,10 @@ def main(page: ft.Page):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
             status_text.value = "Descarga completada!"
-            status_text.color = ft.colors.GREEN
+            status_text.color = ft.Colors.GREEN
         except Exception as e:
             status_text.value = "Error en la descarga"
-            status_text.color = ft.colors.RED
+            status_text.color = ft.Colors.RED
         
         page.update()
 
@@ -108,7 +108,7 @@ def main(page: ft.Page):
                 thumb = f"https://i.ytimg.com/vi/{vid_id}/hqdefault.jpg"
 
                 prog_bar = ft.ProgressBar(value=0, visible=True)
-                stat_text = ft.Text("", size=12, color=ft.colors.PINK)
+                stat_text = ft.Text("", size=12, color=ft.Colors.PINK)
                 active_downloads[vid_id] = {'progress': prog_bar, 'status': stat_text}
 
                 card = ft.Card(
@@ -119,7 +119,7 @@ def main(page: ft.Page):
                                 ft.Image(src=thumb, width=100, height=75, fit=ft.ImageFit.COVER, border_radius=10),
                                 ft.Column([
                                     ft.Text(title, weight=ft.FontWeight.BOLD, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, width=200),
-                                    ft.Text(channel, size=12, color=ft.colors.GREY_400),
+                                    ft.Text(channel, size=12, color=ft.Colors.GREY_400),
                                 ])
                             ]),
                             ft.Row([
@@ -134,14 +134,14 @@ def main(page: ft.Page):
                 results_column.controls.append(card)
         except Exception as ex:
             results_column.controls.clear()
-            results_column.controls.append(ft.Text("Error al buscar. Verifica tu internet.", color=ft.colors.RED))
+            results_column.controls.append(ft.Text("Error al buscar. Verifica tu internet.", color=ft.Colors.RED))
         
         page.update()
 
-    search_btn = ft.IconButton(icon="search", on_click=on_search, icon_color=ft.colors.PINK)
+    search_btn = ft.IconButton(icon="search", on_click=on_search, icon_color=ft.Colors.PINK)
     
     header = ft.Row([
-        ft.Icon("library_music", color=ft.colors.PINK, size=30),
+        ft.Icon("library_music", color=ft.Colors.PINK, size=30),
         ft.Text("Snaptube Local", size=24, weight=ft.FontWeight.BOLD)
     ], alignment=ft.MainAxisAlignment.CENTER)
 
