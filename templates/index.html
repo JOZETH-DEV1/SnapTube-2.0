@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <meta charset="UTF-8">
+        <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>JozethDev Premium</title>
     <link rel="manifest" href="/manifest.json">
@@ -739,9 +738,16 @@
         }
 
         function togglePlayPause() {
-            const media = isAudioOnlyMode ? audioEl : videoEl;
-            if(media.paused) { media.play(); playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; }
-            else { media.pause(); playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; }
+            if (isAudioOnlyMode) {
+                if(audioEl.paused) { audioEl.play(); playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; }
+                else { audioEl.pause(); playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; }
+            } else {
+                if(ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
+                    const state = ytPlayer.getPlayerState();
+                    if(state === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+                    else ytPlayer.playVideo();
+                }
+            }
         }
 
         function toggleVideoMode() {
@@ -842,6 +848,13 @@
             } catch(e) {}
             if(activeDownloads.size > 0) setTimeout(pollProgress, 1000);
         }
+
+
+        // YouTube API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
