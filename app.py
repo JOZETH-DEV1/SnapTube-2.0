@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import yt_dlp
 import os
 import threading
@@ -81,6 +81,14 @@ def is_duplicate(title, seen_normalized):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
 @app.route("/api/search")
 def search():
