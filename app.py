@@ -14,6 +14,10 @@ if not os.path.exists(DOWNLOAD_DIR):
         DOWNLOAD_DIR = "downloads" # Fallback si falla almacenamiento local
         os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+# Carpeta temporal interna para evitar bugs de FFmpeg en Android 11+
+TEMP_DIR = "temp_dl"
+os.makedirs(TEMP_DIR, exist_ok=True)
+
 # Diccionario para rastrear el progreso de las descargas
 downloads_progress = {}
 
@@ -73,14 +77,17 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
     if dl_type == "audio":
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s'),
+            'paths': {
+                'home': DOWNLOAD_DIR,
+                'temp': TEMP_DIR
+            },
+            'outtmpl': {'default': '%(title)s.%(ext)s'},
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
-            },
-            {'key': 'FFmpegMetadata'},
-            ],
+            }],
+            'nocheckcertificate': True,
             'quiet': False,
             'logger': MyLogger(video_id)
         }
@@ -88,8 +95,13 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
         # Configuración para Video
         ydl_opts = {
             'format': f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'outtmpl': os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s'),
+            'paths': {
+                'home': DOWNLOAD_DIR,
+                'temp': TEMP_DIR
+            },
+            'outtmpl': {'default': '%(title)s.%(ext)s'},
             'merge_output_format': 'mp4',
+            'nocheckcertificate': True,
             'quiet': False,
             'logger': MyLogger(video_id)
         }
@@ -99,7 +111,7 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
             ydl.download([url])
         downloads_progress[video_id] = 100.0
     except Exception as e:
-        print("Error:", e)
+        print("Error en descarga:", e)
         downloads_progress[video_id] = -1.0 # Error state
 
 @app.route("/api/download", methods=["POST"])
