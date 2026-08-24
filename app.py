@@ -204,9 +204,10 @@ def stream():
     if not video_id:
         return jsonify({"error": "No ID provided"}), 400
         
-    # El formato 18 es MP4 360p que SIEMPRE tiene audio+video unificado (ideal para navegadores)
-    # bestaudio para solo audio
-    format_selector = 'bestaudio/best' if audio_only else '18/best[ext=mp4][height<=480]/best'
+    # Mejoramos la regla de fallback para que NUNCA falle si no hay formato 18
+    # 22 (720p) -> 18 (360p) -> El mejor MP4 -> Lo que sea que haya
+    format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best'
+    
     ydl_opts = {
         'format': format_selector,
         'quiet': True,
