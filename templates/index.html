@@ -613,10 +613,21 @@
         }
 
         // --- STREAMING (YOUTUBE PREMIUM) ---
-        async function startStreaming(video) {
-            currentStreamVideo = video; // Global
+        let currentQueue = [];
+
+        async function startStreaming(video, updateQueue = true) {
+            currentStreamVideo = video; 
             const playerUI = document.getElementById('global-player');
             playerUI.classList.add('active');
+            
+            // Si actualizamos la cola, revisamos en qué pestaña estamos
+            if (updateQueue) {
+                if (currentMode === 'player') {
+                    currentQueue = [...allVideos];
+                } else if (currentMode === 'playlists' && currentDetailPlaylist) {
+                    currentQueue = [...playlistsData[currentDetailPlaylist]];
+                }
+            }
             
             document.getElementById('player-title').textContent = video.title;
             document.getElementById('player-channel').textContent = video.channel;
@@ -648,10 +659,34 @@
                         album: 'JozethDev Premium',
                         artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
                     });
+
+                    // Configurar controles de la pantalla de bloqueo para siguiente canción
+                    navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
+                    navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
                 }
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
             } catch(e) {
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-red-500"></i>`;
+                // Si falla, saltar a la siguiente tras 3 segundos
+                setTimeout(playNextSong, 3000);
+            }
+        }
+
+        function playNextSong() {
+            if (!currentQueue || currentQueue.length === 0) return;
+            const currentIndex = currentQueue.findIndex(v => v.id === currentStreamId);
+            if (currentIndex >= 0 && currentIndex < currentQueue.length - 1) {
+                startStreaming(currentQueue[currentIndex + 1], false);
+            } else {
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+            }
+        }
+        
+        function playPreviousSong() {
+            if (!currentQueue || currentQueue.length === 0) return;
+            const currentIndex = currentQueue.findIndex(v => v.id === currentStreamId);
+            if (currentIndex > 0) {
+                startStreaming(currentQueue[currentIndex - 1], false);
             }
         }
 
@@ -676,7 +711,7 @@
                 btn.classList.add('bg-gray-800', 'text-gray-400');
             }
             if(currentStreamId && currentStreamVideo) {
-                startStreaming(currentStreamVideo);
+                startStreaming(currentStreamVideo, false);
             }
         }
 
@@ -686,7 +721,15 @@
                 document.getElementById('audio-progress').style.width = pct + '%';
             }
         };
-        audioEl.onended = () => playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+        videoEl.ontimeupdate = () => {
+            if(videoEl.duration) {
+                const pct = (videoEl.currentTime / videoEl.duration) * 100;
+                document.getElementById('audio-progress').style.width = pct + '%';
+            }
+        };
+
+        audioEl.onended = playNextSong;
+        videoEl.onended = playNextSong;
         
         function seekAudio(e) {
             if(!audioEl.duration) return;
