@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import yt_dlp
 import os
 import threading
+import json
 
 app = Flask(__name__)
 
@@ -15,6 +16,21 @@ if not os.path.exists(DOWNLOAD_DIR):
 
 TEMP_DIR = "temp_dl"
 os.makedirs(TEMP_DIR, exist_ok=True)
+
+PLAYLISTS_FILE = "playlists.json"
+
+def load_playlists():
+    if not os.path.exists(PLAYLISTS_FILE):
+        return {}
+    try:
+        with open(PLAYLISTS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_playlists(data):
+    with open(PLAYLISTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
 downloads_progress = {}
 
@@ -153,6 +169,56 @@ def download():
 @app.route("/api/progress")
 def progress():
     return jsonify(downloads_progress)
+
+# --- PLAYLISTS API ---
+
+@app.route("/api/playlists", methods=["GET"])
+def get_playlists():
+    return jsonify(load_playlists())
+
+@app.route("/api/playlists", methods=["POST"])
+def create_playlist():
+    data = request.json
+    name = data.get("name")
+    if not name:
+        return jsonify({"error": "Name required"}), 400
+    
+    pl = load_playlists()
+    if name not in pl:
+        pl[name] = []
+        save_playlists(pl)
+    return jsonify(pl)
+
+@app.route("/api/playlists/<playlist_name>/add", methods=["POST"])
+def add_to_playlist(playlist_name):
+    song = request.json
+    pl = load_playlists()
+    if playlist_name not in pl:
+        return jsonify({"error": "Playlist not found"}), 404
+        
+    # Evitar duplicados exactos por ID
+    if not any(s.get("id") == song.get("id") for s in pl[playlist_name]):
+        pl[playlist_name].append(song)
+        save_playlists(pl)
+        
+    return jsonify(pl)
+
+@app.route("/api/playlists/<playlist_name>/remove", methods=["POST"])
+def remove_from_playlist(playlist_name):
+    video_id = request.json.get("id")
+    pl = load_playlists()
+    if playlist_name in pl:
+        pl[playlist_name] = [s for s in pl[playlist_name] if s.get("id") != video_id]
+        save_playlists(pl)
+    return jsonify(pl)
+
+@app.route("/api/playlists/<playlist_name>", methods=["DELETE"])
+def delete_playlist(playlist_name):
+    pl = load_playlists()
+    if playlist_name in pl:
+        del pl[playlist_name]
+        save_playlists(pl)
+    return jsonify(pl)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

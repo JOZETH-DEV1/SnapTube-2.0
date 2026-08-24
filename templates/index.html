@@ -13,7 +13,7 @@
             background-color: #0a0a0c;
             color: #ffffff;
             -webkit-tap-highlight-color: transparent;
-            padding-bottom: 80px; /* Espacio para el nav bottom */
+            padding-bottom: 80px; 
         }
         .glass-header {
             background: rgba(10, 10, 12, 0.85);
@@ -67,7 +67,6 @@
         }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-        /* Bottom Nav */
         .bottom-nav {
             background: rgba(15, 15, 18, 0.95);
             backdrop-filter: blur(20px);
@@ -83,7 +82,6 @@
             transform: translateY(-2px);
         }
 
-        /* Player Global */
         .global-player {
             background: #1e1e24;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -94,14 +92,15 @@
             transform: translateY(0);
         }
 
-        /* Ocultar elementos según el tab */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
+        /* Ocultar scrollbar */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative">
 
-    <!-- Header -->
     <header class="glass-header sticky top-0 z-40 px-4 pt-5 pb-4">
         <div class="max-w-3xl mx-auto">
             <div class="flex items-center justify-between mb-5">
@@ -115,7 +114,8 @@
                 </div>
             </div>
 
-            <form id="search-form" class="relative group">
+            <!-- Formulario principal de búsqueda -->
+            <form id="search-form" class="relative group tab-search-only">
                 <input type="text" id="search-input" placeholder="Buscar música o video..." 
                        class="search-bar w-full py-4 pl-14 pr-16 rounded-2xl text-white outline-none placeholder-gray-500 font-medium bg-[#15151a]">
                 <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg group-focus-within:text-amber-500 transition-colors"></i>
@@ -126,26 +126,55 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-4 mb-32">
-        <div id="skeleton-container" class="hidden flex-col gap-4">
-            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-3/4"></div><div class="h-3 skeleton rounded-full w-1/2"></div></div></div>
-            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-4/5"></div><div class="h-3 skeleton rounded-full w-2/5"></div></div></div>
-        </div>
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-4 mb-32 relative">
+        
+        <!-- VISTA DE BUSQUEDA (Player & Descargas) -->
+        <div id="view-search" class="tab-content active">
+            <div id="skeleton-container" class="hidden flex-col gap-4">
+                <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-3/4"></div><div class="h-3 skeleton rounded-full w-1/2"></div></div></div>
+                <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-4/5"></div><div class="h-3 skeleton rounded-full w-2/5"></div></div></div>
+            </div>
 
-        <div id="results" class="flex flex-col gap-4">
-            <div class="text-center py-20 opacity-40">
-                <i class="fa-solid fa-music text-5xl text-amber-500/50 mb-4"></i>
-                <h2 class="text-xl font-bold text-gray-300">¿Qué quieres escuchar?</h2>
-                <p class="text-gray-500 mt-2">Streaming sin anuncios y descargas HD</p>
+            <div id="results" class="flex flex-col gap-4">
+                <div class="text-center py-20 opacity-40">
+                    <i class="fa-solid fa-music text-5xl text-amber-500/50 mb-4"></i>
+                    <h2 class="text-xl font-bold text-gray-300">¿Qué quieres escuchar?</h2>
+                    <p class="text-gray-500 mt-2">Streaming sin anuncios y descargas HD</p>
+                </div>
             </div>
         </div>
+
+        <!-- VISTA DE PLAYLISTS -->
+        <div id="view-playlists" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Tus Playlists</h2>
+                <button onclick="openNewPlaylistModal()" class="bg-gray-800 hover:bg-gray-700 text-amber-500 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Nueva
+                </button>
+            </div>
+            
+            <div id="playlists-container" class="grid grid-cols-2 gap-4">
+                <!-- Playlists renderizadas aqui -->
+            </div>
+            
+            <!-- Vista interior de una playlist -->
+            <div id="playlist-detail" class="hidden mt-6 bg-[#121215] p-4 rounded-3xl border border-gray-800">
+                <div class="flex items-center gap-3 mb-6">
+                    <button onclick="closePlaylistDetail()" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h3 id="playlist-detail-title" class="text-xl font-bold text-white truncate"></h3>
+                    <button onclick="deleteCurrentPlaylist()" class="ml-auto text-rose-500 p-2"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <div id="playlist-detail-songs" class="flex flex-col gap-3">
+                    <!-- Canciones -->
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Global Media Player -->
     <div id="global-player" class="global-player fixed bottom-[70px] left-0 right-0 z-40 flex flex-col items-center px-4 py-3 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
         <div class="max-w-3xl w-full">
-            <!-- Reproductor de Video Oculto por defecto -->
             <div id="video-wrapper" class="w-full aspect-video bg-black rounded-xl overflow-hidden hidden mb-3 border border-gray-700">
                 <video id="native-video" class="w-full h-full" controls playsinline></video>
             </div>
@@ -157,12 +186,15 @@
                     <p id="player-channel" class="text-xs text-gray-400 truncate">Canal</p>
                 </div>
                 
-                <!-- Toggle Audio/Video -->
+                <!-- Botón Añadir a Playlist del Reproductor -->
+                <button onclick="openAddToPlaylistModal(currentStreamVideo)" class="w-10 h-10 rounded-full bg-gray-800 text-gray-400 flex items-center justify-center transition hover:text-white">
+                    <i class="fa-solid fa-list-ul"></i>
+                </button>
+                
                 <button onclick="toggleVideoMode()" id="video-toggle-btn" class="w-10 h-10 rounded-full bg-gray-800 text-gray-400 flex items-center justify-center transition hover:text-white">
                     <i class="fa-solid fa-video"></i>
                 </button>
                 
-                <!-- Reproductor de Audio (Oculto) -->
                 <audio id="native-audio"></audio>
                 
                 <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90">
@@ -170,18 +202,19 @@
                 </button>
             </div>
             
-            <!-- Barra de progreso del audio custom -->
             <div class="w-full h-1 bg-gray-700 mt-3 rounded-full overflow-hidden cursor-pointer" onclick="seekAudio(event)" id="audio-progress-container">
                 <div id="audio-progress" class="h-full bg-amber-500 w-0 pointer-events-none transition-all duration-100"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Descarga Múltiple -->
+    <!-- Modals Varios -->
+
+    <!-- Modal Config Descarga -->
     <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
         <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl p-6 border-t border-gray-800 transform translate-y-full transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Opciones de Descarga</h2>
+                <h2 class="text-xl font-bold text-white">Descarga Múltiple</h2>
                 <button onclick="closeConfigModal()" class="w-8 h-8 bg-gray-800 rounded-full text-gray-400"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4">
@@ -200,6 +233,26 @@
         </div>
     </div>
 
+    <!-- Modal Añadir a Playlist -->
+    <div id="add-playlist-modal" class="fixed inset-0 z-[110] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
+        <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl p-6 border-t border-gray-800 transform translate-y-full transition-transform duration-300" id="playlist-modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Guardar en Playlist</h2>
+                <button onclick="closeAddPlaylistModal()" class="w-8 h-8 bg-gray-800 rounded-full text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div id="playlist-options" class="flex flex-col gap-3 max-h-60 overflow-y-auto mb-4">
+                <!-- Se llenará dinámicamente -->
+            </div>
+
+            <div class="pt-4 border-t border-gray-800">
+                <button onclick="openNewPlaylistModal()" class="w-full bg-gray-800 text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus text-amber-500"></i> Crear Nueva Playlist
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom Navigation -->
     <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-50 px-6 py-3 flex justify-around items-center">
         <button onclick="switchTab('player')" id="tab-player" class="nav-item active flex flex-col items-center gap-1 w-20">
@@ -207,71 +260,91 @@
             <span class="text-[10px] font-bold uppercase tracking-wider">Premium</span>
         </button>
         
-        <!-- FAB en medio -->
+        <!-- FAB Descargas -->
         <div class="-mt-8 relative">
             <button id="fab" onclick="openConfigModal()" class="fab-gradient w-14 h-14 rounded-full flex items-center justify-center transition-transform scale-0 shadow-lg">
                 <i class="fa-solid fa-download text-xl"></i>
                 <span id="fab-badge" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#121215]">0</span>
             </button>
         </div>
-        
+
         <button onclick="switchTab('download')" id="tab-download" class="nav-item flex flex-col items-center gap-1 w-20">
             <i class="fa-solid fa-folder-arrow-down text-xl"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Descargas</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Bajar</span>
+        </button>
+        
+        <button onclick="switchTab('playlists')" id="tab-playlists" class="nav-item flex flex-col items-center gap-1 w-20">
+            <i class="fa-solid fa-list-music text-xl"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Playlists</span>
         </button>
     </nav>
 
     <script>
-        // ESTADO GLOBAL
         let allVideos = [];
         let activeDownloads = new Set();
         let selectedVideos = new Map(); 
-        let currentMode = 'player'; // 'player' o 'download'
+        let currentMode = 'player'; 
         
-        // REPRODUCTOR GLOBAL
+        let playlistsData = {};
+        let videoToAdd = null; // Guarda temporalmente el video que se añadirá
+        
+        // REPRODUCTOR
+        let currentStreamVideo = null;
         let currentStreamId = null;
-        let isAudioOnlyMode = true; // Por defecto modo Ahorro de Datos / Fondo
+        let isAudioOnlyMode = true;
         const audioEl = document.getElementById('native-audio');
         const videoEl = document.getElementById('native-video');
         const playPauseBtn = document.getElementById('play-pause-btn');
-
-        // Referencias UI
         const input = document.getElementById('search-input');
         const resultsDiv = document.getElementById('results');
         const skeleton = document.getElementById('skeleton-container');
         const fab = document.getElementById('fab');
-        const fabBadge = document.getElementById('fab-badge');
+
+        // INICIALIZACION
+        async function loadPlaylists() {
+            try {
+                const res = await fetch('/api/playlists');
+                playlistsData = await res.json();
+                renderPlaylistsTab();
+            } catch(e) {}
+        }
+        loadPlaylists();
 
         function switchTab(mode) {
             currentMode = mode;
             document.getElementById('tab-player').classList.toggle('active', mode === 'player');
             document.getElementById('tab-download').classList.toggle('active', mode === 'download');
+            document.getElementById('tab-playlists').classList.toggle('active', mode === 'playlists');
             
-            // Actualizar vista de las cards sin borrar la data
-            renderVideos(true);
+            document.getElementById('view-search').classList.toggle('active', mode === 'player' || mode === 'download');
+            document.getElementById('view-playlists').classList.toggle('active', mode === 'playlists');
+            
+            // Ocultar barra de búsqueda si estamos en playlists
+            const searchForms = document.querySelectorAll('.tab-search-only');
+            searchForms.forEach(f => f.style.display = mode === 'playlists' ? 'none' : 'block');
+            
+            if(mode === 'player' || mode === 'download') {
+                renderVideos();
+            } else {
+                updateFab(); // Ocultar fab de descarga en playlists
+            }
         }
 
         document.getElementById('search-form').onsubmit = async (e) => {
             e.preventDefault();
             if(!input.value.trim()) return;
-
             resultsDiv.innerHTML = '';
             skeleton.classList.remove('hidden');
             skeleton.classList.add('flex');
-
             try {
                 const res = await fetch(`/api/search?q=${encodeURIComponent(input.value.trim())}`);
                 allVideos = await res.json();
-                
                 skeleton.classList.add('hidden');
-                skeleton.classList.remove('flex');
-                
                 if(allVideos.length === 0) {
                     resultsDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-bold">Sin resultados</div>`;
                     return;
                 }
-                
-                renderVideos(true);
+                renderVideos();
             } catch(err) {
                 skeleton.classList.add('hidden');
                 resultsDiv.innerHTML = `<div class="text-center py-20 text-rose-500 font-bold">Error de red</div>`;
@@ -279,6 +352,7 @@
         };
 
         function renderVideos() {
+            if(currentMode === 'playlists') return;
             resultsDiv.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
@@ -288,13 +362,12 @@
                 
                 const card = document.createElement('div');
                 card.id = `card-${video.id}`;
-                
                 let borderClass = isSelected ? 'border-amber-500 bg-amber-500/10' : 'border-gray-800/40';
-                
                 card.className = `video-card flex gap-4 p-3 rounded-2xl select-none relative ${borderClass}`;
                 
-                // Lógica de clic basada en el modo
-                card.onclick = () => {
+                card.onclick = (e) => {
+                    if(e.target.closest('.no-trigger')) return; // No disparar click principal si toca el boton playlist
+                    
                     if(currentMode === 'download') {
                         if(isDownloading) return;
                         toggleSelection(video.id, video.url);
@@ -313,7 +386,14 @@
                         </div>
                     </div>`;
                 } else {
-                    actionUI = `<div class="mt-2 text-xs font-bold text-amber-500"><i class="fa-solid fa-headphones"></i> Toca para reproducir</div>`;
+                    // Boton Añadir a playlist en cada resultado
+                    actionUI = `
+                    <div class="flex items-center justify-between mt-2">
+                        <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-headphones"></i> Escuchar</div>
+                        <button onclick="openAddToPlaylistModal(${JSON.stringify(video).replace(/"/g, '&quot;')})" class="no-trigger w-8 h-8 rounded-full bg-gray-800 text-gray-400 flex items-center justify-center hover:bg-gray-700 hover:text-white transition">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                        </button>
+                    </div>`;
                 }
 
                 card.innerHTML = `
@@ -322,7 +402,6 @@
                         <div class="absolute bottom-2 right-2 bg-black/80 text-amber-400 text-[10px] font-bold px-2 py-1 rounded-md">
                             ${Math.floor(video.duration/60)}:${(video.duration%60).toString().padStart(2,'0')}
                         </div>
-                        ${video.is_downloaded ? `<div class="absolute top-2 left-2 bg-emerald-500/90 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg"><i class="fa-solid fa-check"></i> OK</div>` : ''}
                     </div>
                     <div class="flex flex-col justify-between py-1 w-full pr-1">
                         <div>
@@ -340,28 +419,202 @@
             resultsDiv.appendChild(fragment);
         }
 
-        // --- SISTEMA DE DESCARGA MULTIPLE ---
         function toggleSelection(id, url) {
             if(selectedVideos.has(id)) selectedVideos.delete(id);
             else selectedVideos.set(id, url);
-            
             updateFab();
-            renderVideos(); // Re-render to update checks
+            renderVideos(); 
         }
 
         function updateFab() {
             if(selectedVideos.size > 0 && currentMode === 'download') {
                 fab.classList.remove('scale-0');
                 fab.classList.add('scale-100');
-                fabBadge.textContent = selectedVideos.size;
+                document.getElementById('fab-badge').textContent = selectedVideos.size;
             } else {
                 fab.classList.remove('scale-100');
                 fab.classList.add('scale-0');
             }
         }
 
-        // --- SISTEMA DE STREAMING (YOUTUBE PREMIUM) ---
+        // --- PLAYLISTS LOGICA ---
+        function openAddToPlaylistModal(video) {
+            videoToAdd = video;
+            const container = document.getElementById('playlist-options');
+            container.innerHTML = '';
+            
+            const pNames = Object.keys(playlistsData);
+            if(pNames.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">No tienes playlists creadas</p>`;
+            } else {
+                pNames.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full bg-[#1a1a20] hover:bg-gray-800 text-left px-4 py-3 rounded-xl text-white font-bold border border-gray-800 flex justify-between items-center transition";
+                    btn.innerHTML = `<span>${name}</span> <span class="text-xs text-gray-500">${playlistsData[name].length}</span>`;
+                    btn.onclick = () => addToPlaylist(name);
+                    container.appendChild(btn);
+                });
+            }
+            
+            document.getElementById('add-playlist-modal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('add-playlist-modal').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('playlist-modal-content').classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeAddPlaylistModal() {
+            document.getElementById('add-playlist-modal').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('playlist-modal-content').classList.add('translate-y-full');
+            setTimeout(() => document.getElementById('add-playlist-modal').classList.add('hidden'), 300);
+        }
+
+        async function openNewPlaylistModal() {
+            const name = prompt("Nombre de la nueva Playlist:");
+            if(!name || name.trim()==="") return;
+            try {
+                const res = await fetch('/api/playlists', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name.trim()})
+                });
+                playlistsData = await res.json();
+                renderPlaylistsTab();
+                
+                // Si venia de añadir un video, actualizar la vista
+                if(videoToAdd) {
+                    openAddToPlaylistModal(videoToAdd);
+                }
+            } catch(e) { alert("Error creando playlist"); }
+        }
+
+        async function addToPlaylist(playlistName) {
+            if(!videoToAdd) return;
+            try {
+                const res = await fetch(`/api/playlists/${playlistName}/add`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(videoToAdd)
+                });
+                playlistsData = await res.json();
+                closeAddPlaylistModal();
+                alert(`Guardado en ${playlistName}`);
+                renderPlaylistsTab();
+            } catch(e) { alert("Error"); }
+        }
+
+        function renderPlaylistsTab() {
+            const container = document.getElementById('playlists-container');
+            container.innerHTML = '';
+            
+            const pNames = Object.keys(playlistsData);
+            if(pNames.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center py-20 text-gray-500">Crea tu primera playlist</div>`;
+                return;
+            }
+            
+            pNames.forEach(name => {
+                const card = document.createElement('div');
+                card.className = "bg-[#1a1a20] rounded-2xl p-4 border border-gray-800 cursor-pointer hover:border-amber-500 transition shadow-lg relative overflow-hidden group";
+                
+                // Generar una cuadricula de imagenes
+                const songs = playlistsData[name];
+                let bgHTML = '';
+                if (songs.length > 0) {
+                    bgHTML = `<div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition blur-[2px] bg-cover bg-center" style="background-image: url('https://i.ytimg.com/vi/${songs[0].id}/mqdefault.jpg')"></div>`;
+                }
+
+                card.onclick = () => openPlaylistDetail(name);
+                card.innerHTML = `
+                    ${bgHTML}
+                    <div class="relative z-10 flex flex-col h-full justify-between min-h-[100px]">
+                        <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-black mb-2 shadow-lg">
+                            <i class="fa-solid fa-compact-disc text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white text-lg truncate">${name}</h3>
+                            <p class="text-xs text-gray-400 font-bold">${songs.length} pistas</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        let currentDetailPlaylist = null;
+
+        function openPlaylistDetail(name) {
+            currentDetailPlaylist = name;
+            document.getElementById('playlists-container').classList.add('hidden');
+            const detail = document.getElementById('playlist-detail');
+            detail.classList.remove('hidden');
+            document.getElementById('playlist-detail-title').textContent = name;
+            
+            renderPlaylistSongs(name);
+        }
+
+        function closePlaylistDetail() {
+            currentDetailPlaylist = null;
+            document.getElementById('playlists-container').classList.remove('hidden');
+            document.getElementById('playlist-detail').classList.add('hidden');
+        }
+
+        async function deleteCurrentPlaylist() {
+            if(!currentDetailPlaylist || !confirm(`¿Borrar playlist ${currentDetailPlaylist}?`)) return;
+            try {
+                const res = await fetch(`/api/playlists/${currentDetailPlaylist}`, { method: 'DELETE' });
+                playlistsData = await res.json();
+                closePlaylistDetail();
+                renderPlaylistsTab();
+            } catch(e) {}
+        }
+        
+        async function removeSongFromPlaylist(id, e) {
+            e.stopPropagation();
+            if(!currentDetailPlaylist) return;
+            try {
+                const res = await fetch(`/api/playlists/${currentDetailPlaylist}/remove`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id})
+                });
+                playlistsData = await res.json();
+                renderPlaylistSongs(currentDetailPlaylist);
+            } catch(e) {}
+        }
+
+        function renderPlaylistSongs(name) {
+            const songsContainer = document.getElementById('playlist-detail-songs');
+            songsContainer.innerHTML = '';
+            
+            const songs = playlistsData[name];
+            if(!songs || songs.length === 0) {
+                songsContainer.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">Vacío</p>`;
+                return;
+            }
+            
+            songs.forEach(video => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-3 p-2 bg-[#1a1a20] rounded-xl border border-gray-800 cursor-pointer hover:bg-gray-800 transition";
+                row.onclick = () => startStreaming(video);
+                
+                row.innerHTML = `
+                    <img src="https://i.ytimg.com/vi/${video.id}/default.jpg" class="w-12 h-12 rounded-lg object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">${video.title}</h4>
+                        <p class="text-[10px] text-gray-400 truncate">${video.channel}</p>
+                    </div>
+                    <button onclick="removeSongFromPlaylist('${video.id}', event)" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-rose-500 transition">
+                        <i class="fa-solid fa-trash text-sm"></i>
+                    </button>
+                `;
+                songsContainer.appendChild(row);
+            });
+        }
+
+        // --- STREAMING (YOUTUBE PREMIUM) ---
         async function startStreaming(video) {
+            currentStreamVideo = video; // Global
             const playerUI = document.getElementById('global-player');
             playerUI.classList.add('active');
             
@@ -372,10 +625,8 @@
             playPauseBtn.innerHTML = `<i class="fa-solid fa-spinner spin text-xl"></i>`;
             
             try {
-                // Pedir URL directa al backend
                 const res = await fetch(`/api/stream?id=${video.id}&audio_only=${isAudioOnlyMode}`);
                 const data = await res.json();
-                
                 if(data.error) throw new Error();
                 
                 currentStreamId = video.id;
@@ -390,7 +641,6 @@
                     videoEl.play();
                 }
                 
-                // API MediaSession para Pantalla de Bloqueo!
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: video.title,
@@ -399,9 +649,7 @@
                         artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
                     });
                 }
-                
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
-                
             } catch(e) {
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-red-500"></i>`;
             }
@@ -409,13 +657,8 @@
 
         function togglePlayPause() {
             const media = isAudioOnlyMode ? audioEl : videoEl;
-            if(media.paused) {
-                media.play();
-                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
-            } else {
-                media.pause();
-                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
-            }
+            if(media.paused) { media.play(); playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; }
+            else { media.pause(); playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; }
         }
 
         function toggleVideoMode() {
@@ -432,15 +675,11 @@
                 btn.classList.remove('bg-amber-500', 'text-black');
                 btn.classList.add('bg-gray-800', 'text-gray-400');
             }
-            
-            // Si ya estabamos escuchando algo, recargarlo en el nuevo formato
-            if(currentStreamId) {
-                const vid = allVideos.find(v => v.id === currentStreamId);
-                if(vid) startStreaming(vid);
+            if(currentStreamId && currentStreamVideo) {
+                startStreaming(currentStreamVideo);
             }
         }
 
-        // Sincronizar UI del Audio
         audioEl.ontimeupdate = () => {
             if(audioEl.duration) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
@@ -452,12 +691,11 @@
         function seekAudio(e) {
             if(!audioEl.duration) return;
             const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const pct = x / rect.width;
+            const pct = (e.clientX - rect.left) / rect.width;
             audioEl.currentTime = pct * audioEl.duration;
         }
 
-        // Modal de descarga (igual que antes)
+        // DESCARGA
         function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); setTimeout(() => { document.getElementById('config-modal').classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.remove('translate-y-full'); }, 10); }
         function closeConfigModal() { document.getElementById('config-modal').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.add('translate-y-full'); setTimeout(() => document.getElementById('config-modal').classList.add('hidden'), 300); }
 
