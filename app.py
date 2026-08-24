@@ -87,7 +87,7 @@ def search():
     query = request.args.get("q", "")
     if not query: return jsonify([])
 
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'noplaylist': True}
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -131,7 +131,7 @@ def fyp():
             chosen_channel = random.choice(channels)
             query = f"{chosen_channel} mix musica"
             
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'noplaylist': True}
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(f"ytsearch20:{query}", download=False)
@@ -160,7 +160,7 @@ def fyp():
 @app.route("/api/radio")
 def radio():
     channel = request.args.get("channel", "")
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'noplaylist': True}
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(f"ytsearch20:{channel} exitos mix", download=False)
@@ -206,11 +206,11 @@ def stream():
         
     # Mejoramos la regla de fallback para que NUNCA falle si no hay formato 18
     # 22 (720p) -> 18 (360p) -> El mejor MP4 -> Lo que sea que haya
-    format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best'
+    format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best/bestaudio/best'
     
     ydl_opts = {
         'format': format_selector,
-        'quiet': True, 'js_runtimes': {'node': {}},
+        'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'],
         'nocheckcertificate': True,
     }
     
@@ -236,7 +236,7 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
             'outtmpl': {'default': '%(title)s.%(ext)s'},
             'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
             'nocheckcertificate': True,
-            'quiet': False, 'js_runtimes': {'node': {}},
+            'quiet': False, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'],
             'logger': MyLogger(video_id)
         }
     else:
@@ -246,7 +246,7 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
             'outtmpl': {'default': '%(title)s.%(ext)s'},
             'merge_output_format': 'mp4',
             'nocheckcertificate': True,
-            'quiet': False, 'js_runtimes': {'node': {}},
+            'quiet': False, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'],
             'logger': MyLogger(video_id)
         }
         
