@@ -2,8 +2,8 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JozethDev Downloader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JozethDev Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -13,6 +13,7 @@
             background-color: #0a0a0c;
             color: #ffffff;
             -webkit-tap-highlight-color: transparent;
+            padding-bottom: 80px; /* Espacio para el nav bottom */
         }
         .glass-header {
             background: rgba(10, 10, 12, 0.85);
@@ -23,12 +24,10 @@
         .search-bar {
             background: rgba(255, 255, 255, 0.04);
             border: 2px solid rgba(255, 255, 255, 0.05);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .search-bar:focus-within {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: #f59e0b; /* Amber 500 */
+            border-color: #f59e0b;
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
         }
         .video-card {
@@ -36,9 +35,7 @@
             border: 2px solid rgba(255, 255, 255, 0.03);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .video-card:active {
-            transform: scale(0.97);
-        }
+        .video-card:active { transform: scale(0.97); }
         .video-card.selected {
             border-color: #f59e0b;
             background: linear-gradient(145deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 15, 18, 0.95) 100%);
@@ -50,28 +47,10 @@
             box-shadow: 0 8px 30px -5px rgba(245, 158, 11, 0.5);
             color: #000;
         }
-        .fab-gradient:active {
-            transform: scale(0.95);
-        }
+        .fab-gradient:active { transform: scale(0.95); }
+        .check-circle { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .selected .check-circle { transform: scale(1.1) rotate(360deg); }
         
-        /* Bouncy Checkbox */
-        .check-circle {
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .selected .check-circle {
-            transform: scale(1.1) rotate(360deg);
-        }
-
-        /* Toggles (Select) Animation */
-        select {
-            transition: all 0.3s ease;
-        }
-        select:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2);
-        }
-
-        /* Loader de spinner */
         .spinner {
             width: 40px; height: 40px;
             border: 3px solid rgba(245, 158, 11, 0.2);
@@ -81,52 +60,66 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* Skeletons */
         .skeleton {
             background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
         }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        
-        /* Tiktok Button Pulse */
-        .tiktok-btn {
-            animation: pulse-glow 2s infinite;
+
+        /* Bottom Nav */
+        .bottom-nav {
+            background: rgba(15, 15, 18, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: env(safe-area-inset-bottom);
         }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(255, 0, 80, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 0, 80, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 0, 80, 0); }
+        .nav-item {
+            color: #6b7280;
+            transition: all 0.3s ease;
         }
+        .nav-item.active {
+            color: #f59e0b;
+            transform: translateY(-2px);
+        }
+
+        /* Player Global */
+        .global-player {
+            background: #1e1e24;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateY(100%);
+        }
+        .global-player.active {
+            transform: translateY(0);
+        }
+
+        /* Ocultar elementos según el tab */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col relative pb-28">
+<body class="antialiased min-h-screen flex flex-col relative">
 
-    <!-- Header & Search (Sticky) -->
+    <!-- Header -->
     <header class="glass-header sticky top-0 z-40 px-4 pt-5 pb-4">
         <div class="max-w-3xl mx-auto">
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                        <i class="fa-solid fa-bolt text-black text-lg"></i>
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                        <i class="fa-solid fa-play text-black text-lg ml-1"></i>
                     </div>
                     <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-amber-500">
-                        JozethDev <span class="text-white">DL</span>
+                        JozethDev <span class="text-white">Premium</span>
                     </h1>
                 </div>
-                
-                <!-- Botón TikTok -->
-                <a href="https://tiktok.com/@jozethdev" target="_blank" class="tiktok-btn flex items-center gap-2 bg-[#ff0050] hover:bg-[#e60048] text-white px-4 py-2 rounded-full font-bold text-sm transition-all transform hover:scale-105 active:scale-95">
-                    <i class="fa-brands fa-tiktok"></i>
-                    <span>Sígueme</span>
-                </a>
             </div>
 
             <form id="search-form" class="relative group">
-                <input type="text" id="search-input" placeholder="Busca tu música favorita..." 
-                       class="search-bar w-full py-4 pl-14 pr-16 rounded-2xl text-white outline-none placeholder-gray-500 font-medium">
-                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg transition group-focus-within:text-amber-500"></i>
-                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-500 hover:bg-amber-400 text-black rounded-xl p-2 w-12 h-10 flex items-center justify-center transition-all shadow-lg hover:w-14">
+                <input type="text" id="search-input" placeholder="Buscar música o video..." 
+                       class="search-bar w-full py-4 pl-14 pr-16 rounded-2xl text-white outline-none placeholder-gray-500 font-medium bg-[#15151a]">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg group-focus-within:text-amber-500 transition-colors"></i>
+                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-500 text-black rounded-xl p-2 w-12 h-10 flex items-center justify-center transition-all shadow-lg hover:bg-amber-400 active:scale-95">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
@@ -134,413 +127,374 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
-        <!-- Contenedor de Skeletons -->
-        <div id="skeleton-container" class="hidden flex-col gap-5">
-            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
-                <div class="w-36 h-24 rounded-xl skeleton flex-shrink-0"></div>
-                <div class="flex-1 py-2 space-y-4">
-                    <div class="h-4 bg-gray-800 rounded-full skeleton w-3/4"></div>
-                    <div class="h-3 bg-gray-800 rounded-full skeleton w-1/2"></div>
-                </div>
-            </div>
-            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
-                <div class="w-36 h-24 rounded-xl skeleton flex-shrink-0"></div>
-                <div class="flex-1 py-2 space-y-4">
-                    <div class="h-4 bg-gray-800 rounded-full skeleton w-4/5"></div>
-                    <div class="h-3 bg-gray-800 rounded-full skeleton w-2/5"></div>
-                </div>
-            </div>
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-4 mb-32">
+        <div id="skeleton-container" class="hidden flex-col gap-4">
+            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-3/4"></div><div class="h-3 skeleton rounded-full w-1/2"></div></div></div>
+            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50"><div class="w-36 h-24 rounded-xl skeleton"></div><div class="flex-1 py-2 space-y-4"><div class="h-4 skeleton rounded-full w-4/5"></div><div class="h-3 skeleton rounded-full w-2/5"></div></div></div>
         </div>
 
-        <!-- Contenedor de Resultados -->
-        <div id="results" class="flex flex-col gap-5">
-            <!-- Estado vacío -->
-            <div class="text-center py-20 opacity-40 flex flex-col items-center mt-10">
-                <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                    <i class="fa-solid fa-headphones-simple text-4xl text-amber-500/50"></i>
-                </div>
-                <h2 class="text-xl font-bold text-gray-300 mb-2">¿Qué vamos a escuchar hoy?</h2>
-                <p class="font-medium text-gray-500">Busca artistas, canciones o pega un enlace</p>
+        <div id="results" class="flex flex-col gap-4">
+            <div class="text-center py-20 opacity-40">
+                <i class="fa-solid fa-music text-5xl text-amber-500/50 mb-4"></i>
+                <h2 class="text-xl font-bold text-gray-300">¿Qué quieres escuchar?</h2>
+                <p class="text-gray-500 mt-2">Streaming sin anuncios y descargas HD</p>
             </div>
         </div>
     </main>
 
-    <!-- Modal de Configuración -->
-    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
-        <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl overflow-hidden relative shadow-2xl border-t sm:border border-gray-700/50 p-6 transform translate-y-full sm:translate-y-0 transition-all duration-400 ease-out" id="modal-content">
+    <!-- Global Media Player -->
+    <div id="global-player" class="global-player fixed bottom-[70px] left-0 right-0 z-40 flex flex-col items-center px-4 py-3 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+        <div class="max-w-3xl w-full">
+            <!-- Reproductor de Video Oculto por defecto -->
+            <div id="video-wrapper" class="w-full aspect-video bg-black rounded-xl overflow-hidden hidden mb-3 border border-gray-700">
+                <video id="native-video" class="w-full h-full" controls playsinline></video>
+            </div>
             
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-extrabold text-white tracking-tight">Opciones</h2>
-                <button onclick="closeConfigModal()" class="w-10 h-10 bg-gray-800/80 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+            <div class="flex items-center gap-4">
+                <img id="player-thumb" src="" class="w-14 h-14 rounded-lg object-cover shadow-lg border border-gray-700">
+                <div class="flex-1 min-w-0">
+                    <h4 id="player-title" class="font-bold text-sm text-white truncate">Título</h4>
+                    <p id="player-channel" class="text-xs text-gray-400 truncate">Canal</p>
+                </div>
+                
+                <!-- Toggle Audio/Video -->
+                <button onclick="toggleVideoMode()" id="video-toggle-btn" class="w-10 h-10 rounded-full bg-gray-800 text-gray-400 flex items-center justify-center transition hover:text-white">
+                    <i class="fa-solid fa-video"></i>
+                </button>
+                
+                <!-- Reproductor de Audio (Oculto) -->
+                <audio id="native-audio"></audio>
+                
+                <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90">
+                    <i class="fa-solid fa-play text-xl ml-1"></i>
                 </button>
             </div>
             
-            <div class="space-y-6">
-                <!-- Toggle animado Formato -->
-                <div class="group">
-                    <label class="block text-[10px] font-black tracking-widest text-amber-500/80 uppercase mb-3 ml-1">¿Audio o Video?</label>
-                    <div class="relative">
-                        <select id="dl-type" class="w-full bg-[#1a1a20] text-white rounded-2xl p-5 border-2 border-gray-800 outline-none focus:border-amber-500 transition-all appearance-none font-bold text-lg cursor-pointer" onchange="toggleQuality(this.value)">
-                            <option value="audio">🎵 Solo MP3 (Audio)</option>
-                            <option value="video">🎥 MP4 (Video Completo)</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-amber-500 transition-colors"></i>
-                    </div>
-                </div>
+            <!-- Barra de progreso del audio custom -->
+            <div class="w-full h-1 bg-gray-700 mt-3 rounded-full overflow-hidden cursor-pointer" onclick="seekAudio(event)" id="audio-progress-container">
+                <div id="audio-progress" class="h-full bg-amber-500 w-0 pointer-events-none transition-all duration-100"></div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Toggle animado Calidad -->
-                <div id="quality-container" class="hidden group transition-all duration-300 transform translate-y-4 opacity-0">
-                    <label class="block text-[10px] font-black tracking-widest text-amber-500/80 uppercase mb-3 ml-1">Calidad Visual</label>
-                    <div class="relative">
-                        <select id="dl-quality" class="w-full bg-[#1a1a20] text-white rounded-2xl p-5 border-2 border-gray-800 outline-none focus:border-amber-500 transition-all appearance-none font-bold text-lg cursor-pointer">
-                            <option value="1080">👑 1080p (Full HD)</option>
-                            <option value="720" selected>✨ 720p (HD)</option>
-                            <option value="480">📱 480p (Ahorro Datos)</option>
-                        </select>
-                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-amber-500 transition-colors"></i>
-                    </div>
+    <!-- Modal Descarga Múltiple -->
+    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
+        <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl p-6 border-t border-gray-800 transform translate-y-full transition-transform duration-300" id="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Opciones de Descarga</h2>
+                <button onclick="closeConfigModal()" class="w-8 h-8 bg-gray-800 rounded-full text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-4">
+                <select id="dl-type" class="w-full bg-[#1a1a20] text-white rounded-xl p-4 border border-gray-800 font-bold" onchange="document.getElementById('quality-container').style.display = this.value === 'video' ? 'block' : 'none'">
+                    <option value="audio">🎵 MP3 Audio</option>
+                    <option value="video">🎥 MP4 Video</option>
+                </select>
+                <div id="quality-container" style="display:none;">
+                    <select id="dl-quality" class="w-full bg-[#1a1a20] text-white rounded-xl p-4 border border-gray-800 font-bold">
+                        <option value="1080">1080p</option>
+                        <option value="720" selected>720p</option>
+                    </select>
                 </div>
             </div>
-
-            <button onclick="confirmDownload()" class="w-full fab-gradient text-black font-extrabold py-5 px-4 rounded-2xl mt-8 transition transform shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center gap-3 text-lg">
-                <i class="fa-solid fa-bolt text-xl"></i> ¡Descargar Ahora!
-            </button>
+            <button onclick="confirmDownload()" class="w-full fab-gradient text-black font-extrabold py-4 px-4 rounded-xl mt-6">Iniciar Descarga</button>
         </div>
     </div>
 
-    <!-- Floating Action Button -->
-    <div id="fab" class="hidden fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none px-4">
-        <button onclick="openConfigModal()" class="pointer-events-auto fab-gradient text-black font-extrabold py-4 px-6 rounded-2xl transform transition hover:-translate-y-2 active:translate-y-0 flex items-center justify-between w-full max-w-sm">
-            <span class="flex items-center gap-3">
-                <div class="bg-black/10 w-8 h-8 rounded-full flex items-center justify-center">
-                    <i class="fa-solid fa-layer-group text-sm"></i>
-                </div>
-                <span id="fab-text" class="text-base">0 seleccionados</span>
-            </span>
-            <span class="bg-black text-amber-400 px-4 py-2 rounded-xl text-xs tracking-wider uppercase font-black">Continuar <i class="fa-solid fa-arrow-right ml-1"></i></span>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-50 px-6 py-3 flex justify-around items-center">
+        <button onclick="switchTab('player')" id="tab-player" class="nav-item active flex flex-col items-center gap-1 w-20">
+            <i class="fa-solid fa-play text-xl"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Premium</span>
         </button>
-    </div>
-
-    <!-- Modal Reproductor -->
-    <div id="video-modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex-col justify-center items-center p-4 backdrop-blur-2xl transition-all opacity-0">
-        <div class="w-full max-w-3xl relative transform scale-95 transition-transform duration-300" id="video-modal-content">
-            <button onclick="closeVideo()" class="absolute -top-14 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full px-5 py-2 transition-all font-bold text-sm flex items-center gap-2 backdrop-blur-md">
-                <i class="fa-solid fa-xmark"></i> Cerrar
+        
+        <!-- FAB en medio -->
+        <div class="-mt-8 relative">
+            <button id="fab" onclick="openConfigModal()" class="fab-gradient w-14 h-14 rounded-full flex items-center justify-center transition-transform scale-0 shadow-lg">
+                <i class="fa-solid fa-download text-xl"></i>
+                <span id="fab-badge" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#121215]">0</span>
             </button>
-            <div class="w-full aspect-video rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10" id="video-container"></div>
         </div>
-    </div>
+        
+        <button onclick="switchTab('download')" id="tab-download" class="nav-item flex flex-col items-center gap-1 w-20">
+            <i class="fa-solid fa-folder-arrow-down text-xl"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Descargas</span>
+        </button>
+    </nav>
 
     <script>
-        const form = document.getElementById('search-form');
-        const input = document.getElementById('search-input');
-        const resultsDiv = document.getElementById('results');
-        const skeletonContainer = document.getElementById('skeleton-container');
-        const fab = document.getElementById('fab');
-        const fabText = document.getElementById('fab-text');
-        const videoModal = document.getElementById('video-modal');
-        const videoModalContent = document.getElementById('video-modal-content');
-        const configModal = document.getElementById('config-modal');
-        const modalContent = document.getElementById('modal-content');
-
+        // ESTADO GLOBAL
         let allVideos = [];
         let activeDownloads = new Set();
         let selectedVideos = new Map(); 
+        let currentMode = 'player'; // 'player' o 'download'
+        
+        // REPRODUCTOR GLOBAL
+        let currentStreamId = null;
+        let isAudioOnlyMode = true; // Por defecto modo Ahorro de Datos / Fondo
+        const audioEl = document.getElementById('native-audio');
+        const videoEl = document.getElementById('native-video');
+        const playPauseBtn = document.getElementById('play-pause-btn');
 
-        let currentRenderLimit = 10;
-        let observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && currentRenderLimit < allVideos.length) {
-                currentRenderLimit += 10;
-                renderVideos(false);
-            }
-        }, { rootMargin: "200px" });
+        // Referencias UI
+        const input = document.getElementById('search-input');
+        const resultsDiv = document.getElementById('results');
+        const skeleton = document.getElementById('skeleton-container');
+        const fab = document.getElementById('fab');
+        const fabBadge = document.getElementById('fab-badge');
 
-        function formatDuration(seconds) {
-            if(!seconds) return "??:??";
-            const m = Math.floor(seconds / 60);
-            const s = seconds % 60;
-            return `${m}:${s.toString().padStart(2, '0')}`;
+        function switchTab(mode) {
+            currentMode = mode;
+            document.getElementById('tab-player').classList.toggle('active', mode === 'player');
+            document.getElementById('tab-download').classList.toggle('active', mode === 'download');
+            
+            // Actualizar vista de las cards sin borrar la data
+            renderVideos(true);
         }
 
-        form.addEventListener('submit', async (e) => {
+        document.getElementById('search-form').onsubmit = async (e) => {
             e.preventDefault();
-            const query = input.value.trim();
-            if(!query) return;
+            if(!input.value.trim()) return;
 
             resultsDiv.innerHTML = '';
-            selectedVideos.clear();
-            updateFab();
-            
-            skeletonContainer.classList.remove('hidden');
-            skeletonContainer.classList.add('flex');
+            skeleton.classList.remove('hidden');
+            skeleton.classList.add('flex');
 
             try {
-                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                allVideos = data;
-                currentRenderLimit = 10;
+                const res = await fetch(`/api/search?q=${encodeURIComponent(input.value.trim())}`);
+                allVideos = await res.json();
                 
-                skeletonContainer.classList.add('hidden');
-                skeletonContainer.classList.remove('flex');
+                skeleton.classList.add('hidden');
+                skeleton.classList.remove('flex');
                 
-                if(data.length === 0) {
-                    resultsDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-bold">No encontramos nada con ese nombre 😢</div>`;
+                if(allVideos.length === 0) {
+                    resultsDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-bold">Sin resultados</div>`;
                     return;
                 }
                 
                 renderVideos(true);
-            } catch(e) {
-                skeletonContainer.classList.add('hidden');
-                resultsDiv.innerHTML = `<div class="text-center py-20 text-rose-500"><i class="fa-solid fa-wifi text-4xl mb-4 opacity-50"></i><br><span class="font-bold">Error de conexión</span></div>`;
+            } catch(err) {
+                skeleton.classList.add('hidden');
+                resultsDiv.innerHTML = `<div class="text-center py-20 text-rose-500 font-bold">Error de red</div>`;
             }
-        });
+        };
 
-        function renderVideos(clearFirst = true) {
-            if(clearFirst) {
-                resultsDiv.innerHTML = '';
-                const trigger = document.createElement('div');
-                trigger.id = "scroll-trigger";
-                trigger.className = "h-1 w-full mt-2";
-                resultsDiv.appendChild(trigger);
-            }
-
-            const trigger = document.getElementById('scroll-trigger');
-            const startIndex = clearFirst ? 0 : currentRenderLimit - 10;
-            const chunk = allVideos.slice(startIndex, currentRenderLimit);
+        function renderVideos() {
+            resultsDiv.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
-            chunk.forEach((video, index) => {
+            allVideos.forEach(video => {
                 const isSelected = selectedVideos.has(video.id);
                 const isDownloading = activeDownloads.has(video.id);
                 
-                let statusBadge = '';
-                if (video.is_downloaded) {
-                    statusBadge = `<div class="absolute top-2 left-2 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-extrabold px-2 py-1 rounded-lg shadow-lg border border-emerald-400/50 flex items-center gap-1.5 uppercase tracking-wide"><i class="fa-solid fa-check"></i> En Biblioteca</div>`;
-                }
-                const durationBadge = `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-white/10 shadow-lg">${formatDuration(video.duration)}</div>`;
-
                 const card = document.createElement('div');
                 card.id = `card-${video.id}`;
                 
-                let borderClass = isSelected ? 'border-amber-500 bg-amber-500/10 scale-[1.02]' : 'border-gray-800/40';
-                let opacityClass = video.is_downloaded ? 'opacity-50 grayscale-[50%]' : '';
+                let borderClass = isSelected ? 'border-amber-500 bg-amber-500/10' : 'border-gray-800/40';
                 
-                card.className = `video-card flex gap-4 p-3 rounded-2xl cursor-pointer select-none relative ${borderClass} ${opacityClass}`;
-                // Animación de cascada al aparecer
-                card.style.animation = `fadeUp 0.4s ease forwards ${index * 0.05}s`;
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
+                card.className = `video-card flex gap-4 p-3 rounded-2xl select-none relative ${borderClass}`;
                 
-                if (!isDownloading) {
-                    card.onclick = (e) => toggleSelection(e, video.id, video.url);
+                // Lógica de clic basada en el modo
+                card.onclick = () => {
+                    if(currentMode === 'download') {
+                        if(isDownloading) return;
+                        toggleSelection(video.id, video.url);
+                    } else {
+                        startStreaming(video);
+                    }
+                };
+
+                let actionUI = '';
+                if(currentMode === 'download') {
+                    actionUI = `
+                    <div class="flex items-center justify-between mt-2">
+                        <div id="status-${video.id}" class="text-xs font-bold text-amber-400 hidden"></div>
+                        <div class="check-circle w-7 h-7 rounded-full border-2 ${isSelected ? 'border-amber-500 bg-amber-500 text-black' : 'border-gray-600 bg-gray-800 text-transparent'} flex items-center justify-center shadow-md ml-auto" id="check-${video.id}">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </div>
+                    </div>`;
+                } else {
+                    actionUI = `<div class="mt-2 text-xs font-bold text-amber-500"><i class="fa-solid fa-headphones"></i> Toca para reproducir</div>`;
                 }
 
                 card.innerHTML = `
-                    <div class="relative w-36 h-24 flex-shrink-0 rounded-xl overflow-hidden shadow-lg group border border-white/5">
-                        <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" class="w-full h-full object-cover transform transition duration-500 group-hover:scale-110" loading="lazy">
-                        ${statusBadge}
-                        ${durationBadge}
-                        <button onclick="playVideo(event, '${video.id}')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                            <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-                                <i class="fa-solid fa-play text-black ml-1"></i>
-                            </div>
-                        </button>
+                    <div class="relative w-36 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-gray-900 border border-white/5">
+                        <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" class="w-full h-full object-cover">
+                        <div class="absolute bottom-2 right-2 bg-black/80 text-amber-400 text-[10px] font-bold px-2 py-1 rounded-md">
+                            ${Math.floor(video.duration/60)}:${(video.duration%60).toString().padStart(2,'0')}
+                        </div>
+                        ${video.is_downloaded ? `<div class="absolute top-2 left-2 bg-emerald-500/90 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg"><i class="fa-solid fa-check"></i> OK</div>` : ''}
                     </div>
-                    
-                    <div class="flex flex-col justify-between py-1 w-full min-w-0 pr-1">
+                    <div class="flex flex-col justify-between py-1 w-full pr-1">
                         <div>
-                            <h3 class="font-bold text-[13px] text-gray-100 leading-tight line-clamp-2 mb-1.5">${video.title}</h3>
-                            <p class="text-[11px] text-gray-400 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-youtube text-gray-500"></i> ${video.channel}</p>
+                            <h3 class="font-bold text-[13px] text-gray-100 leading-tight line-clamp-2">${video.title}</h3>
+                            <p class="text-[11px] text-gray-400 mt-1">${video.channel}</p>
                         </div>
-                        
-                        <div class="flex items-center justify-between mt-2">
-                            <div id="status-${video.id}" class="text-xs font-bold text-amber-400 hidden"></div>
-                            
-                            <div class="check-circle w-7 h-7 rounded-full border-2 ${isSelected ? 'border-amber-500 bg-amber-500 text-black' : 'border-gray-600 bg-gray-800 text-transparent'} flex items-center justify-center shadow-md ml-auto" id="check-${video.id}">
-                                <i class="fa-solid fa-check text-xs"></i>
-                            </div>
-                        </div>
+                        ${actionUI}
                     </div>
-                    
-                    <div id="progress-container-${video.id}" class="hidden absolute bottom-0 left-0 right-0 h-1.5 bg-gray-900 rounded-b-2xl overflow-hidden">
-                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.8)]" style="width: 0%"></div>
+                    <div id="progress-container-${video.id}" class="hidden absolute bottom-0 left-0 right-0 h-1 bg-gray-900 rounded-b-2xl">
+                        <div id="progress-bar-${video.id}" class="h-full bg-amber-500" style="width: 0%"></div>
                     </div>
                 `;
                 fragment.appendChild(card);
             });
-
-            resultsDiv.insertBefore(fragment, trigger);
-            
-            observer.disconnect();
-            if(trigger) observer.observe(trigger);
+            resultsDiv.appendChild(fragment);
         }
 
-        function toggleSelection(e, id, url) {
-            if(e.target.closest('button')) return; 
+        // --- SISTEMA DE DESCARGA MULTIPLE ---
+        function toggleSelection(id, url) {
+            if(selectedVideos.has(id)) selectedVideos.delete(id);
+            else selectedVideos.set(id, url);
             
-            const card = document.getElementById(`card-${id}`);
-            const check = document.getElementById(`check-${id}`);
-            
-            if(selectedVideos.has(id)) {
-                selectedVideos.delete(id);
-                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10', 'scale-[1.02]');
-                card.classList.add('border-gray-800/40');
-                check.className = "check-circle w-7 h-7 rounded-full border-2 border-gray-600 bg-gray-800 text-transparent flex items-center justify-center shadow-md ml-auto";
-            } else {
-                selectedVideos.set(id, url);
-                card.classList.remove('border-gray-800/40');
-                card.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
-                check.className = "check-circle w-7 h-7 rounded-full border-2 border-amber-500 bg-amber-500 text-black flex items-center justify-center shadow-md ml-auto";
-            }
-            
-            // Efecto de sonido ligero o vibración haptica si está disponible en móvil
-            if (window.navigator && window.navigator.vibrate) {
-                window.navigator.vibrate(50);
-            }
-
             updateFab();
+            renderVideos(); // Re-render to update checks
         }
 
         function updateFab() {
-            if(selectedVideos.size > 0) {
-                fab.classList.remove('hidden');
-                fabText.textContent = `${selectedVideos.size} seleccionada${selectedVideos.size > 1 ? 's' : ''}`;
+            if(selectedVideos.size > 0 && currentMode === 'download') {
+                fab.classList.remove('scale-0');
+                fab.classList.add('scale-100');
+                fabBadge.textContent = selectedVideos.size;
             } else {
-                fab.classList.add('hidden');
+                fab.classList.remove('scale-100');
+                fab.classList.add('scale-0');
             }
         }
 
-        function openConfigModal() {
-            configModal.classList.remove('hidden');
-            setTimeout(() => {
-                configModal.classList.remove('opacity-0', 'pointer-events-none');
-                modalContent.classList.remove('translate-y-full');
-            }, 10);
-            fab.classList.add('hidden');
-        }
-
-        function closeConfigModal() {
-            configModal.classList.add('opacity-0', 'pointer-events-none');
-            modalContent.classList.add('translate-y-full');
-            setTimeout(() => {
-                configModal.classList.add('hidden');
-            }, 400);
-            updateFab(); 
-        }
-
-        function toggleQuality(type) {
-            const container = document.getElementById('quality-container');
-            if (type === 'video') {
-                container.classList.remove('hidden');
-                setTimeout(() => { 
-                    container.classList.remove('translate-y-4', 'opacity-0');
-                }, 10);
-            } else {
-                container.classList.add('translate-y-4', 'opacity-0');
-                setTimeout(() => { container.classList.add('hidden'); }, 300);
+        // --- SISTEMA DE STREAMING (YOUTUBE PREMIUM) ---
+        async function startStreaming(video) {
+            const playerUI = document.getElementById('global-player');
+            playerUI.classList.add('active');
+            
+            document.getElementById('player-title').textContent = video.title;
+            document.getElementById('player-channel').textContent = video.channel;
+            document.getElementById('player-thumb').src = `https://i.ytimg.com/vi/${video.id}/default.jpg`;
+            
+            playPauseBtn.innerHTML = `<i class="fa-solid fa-spinner spin text-xl"></i>`;
+            
+            try {
+                // Pedir URL directa al backend
+                const res = await fetch(`/api/stream?id=${video.id}&audio_only=${isAudioOnlyMode}`);
+                const data = await res.json();
+                
+                if(data.error) throw new Error();
+                
+                currentStreamId = video.id;
+                
+                if (isAudioOnlyMode) {
+                    videoEl.pause();
+                    audioEl.src = data.url;
+                    audioEl.play();
+                } else {
+                    audioEl.pause();
+                    videoEl.src = data.url;
+                    videoEl.play();
+                }
+                
+                // API MediaSession para Pantalla de Bloqueo!
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: video.title,
+                        artist: video.channel,
+                        album: 'JozethDev Premium',
+                        artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
+                    });
+                }
+                
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
+                
+            } catch(e) {
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-red-500"></i>`;
             }
         }
 
-        function playVideo(e, id) {
-            e.stopPropagation();
-            const container = document.getElementById('video-container');
-            container.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            videoModal.classList.remove('hidden');
-            setTimeout(() => {
-                videoModal.classList.remove('opacity-0');
-                videoModalContent.classList.remove('scale-95');
-                videoModalContent.classList.add('scale-100');
-            }, 10);
+        function togglePlayPause() {
+            const media = isAudioOnlyMode ? audioEl : videoEl;
+            if(media.paused) {
+                media.play();
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
+            } else {
+                media.pause();
+                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+            }
         }
 
-        function closeVideo() {
-            videoModal.classList.add('opacity-0');
-            videoModalContent.classList.remove('scale-100');
-            videoModalContent.classList.add('scale-95');
-            setTimeout(() => {
-                videoModal.classList.add('hidden');
-                document.getElementById('video-container').innerHTML = ''; 
-            }, 300);
+        function toggleVideoMode() {
+            isAudioOnlyMode = !isAudioOnlyMode;
+            const wrap = document.getElementById('video-wrapper');
+            const btn = document.getElementById('video-toggle-btn');
+            
+            if(!isAudioOnlyMode) {
+                wrap.classList.remove('hidden');
+                btn.classList.add('bg-amber-500', 'text-black');
+                btn.classList.remove('bg-gray-800', 'text-gray-400');
+            } else {
+                wrap.classList.add('hidden');
+                btn.classList.remove('bg-amber-500', 'text-black');
+                btn.classList.add('bg-gray-800', 'text-gray-400');
+            }
+            
+            // Si ya estabamos escuchando algo, recargarlo en el nuevo formato
+            if(currentStreamId) {
+                const vid = allVideos.find(v => v.id === currentStreamId);
+                if(vid) startStreaming(vid);
+            }
         }
+
+        // Sincronizar UI del Audio
+        audioEl.ontimeupdate = () => {
+            if(audioEl.duration) {
+                const pct = (audioEl.currentTime / audioEl.duration) * 100;
+                document.getElementById('audio-progress').style.width = pct + '%';
+            }
+        };
+        audioEl.onended = () => playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+        
+        function seekAudio(e) {
+            if(!audioEl.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const pct = x / rect.width;
+            audioEl.currentTime = pct * audioEl.duration;
+        }
+
+        // Modal de descarga (igual que antes)
+        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); setTimeout(() => { document.getElementById('config-modal').classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.remove('translate-y-full'); }, 10); }
+        function closeConfigModal() { document.getElementById('config-modal').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.add('translate-y-full'); setTimeout(() => document.getElementById('config-modal').classList.add('hidden'), 300); }
 
         async function confirmDownload() {
             const dlType = document.getElementById('dl-type').value;
             const quality = document.getElementById('dl-quality').value;
-            
             closeConfigModal(); 
-            
             for (let [id, url] of selectedVideos.entries()) {
                 const statusDiv = document.getElementById(`status-${id}`);
                 const progCont = document.getElementById(`progress-container-${id}`);
-                const card = document.getElementById(`card-${id}`);
-                const checkIcon = document.getElementById(`check-${id}`);
-                
-                if (card) {
-                    card.onclick = null; 
-                    card.classList.remove('selected', 'cursor-pointer', 'border-amber-500', 'bg-amber-500/10', 'scale-[1.02]');
-                    card.classList.add('border-gray-800/40');
-                }
-                if (checkIcon) {
-                    checkIcon.className = "w-7 h-7 flex items-center justify-center ml-auto";
-                    checkIcon.innerHTML = `<i class="fa-solid fa-circle-notch spin text-amber-500 text-lg"></i>`;
-                }
-                
-                if (statusDiv) {
-                    statusDiv.classList.remove('hidden');
-                    statusDiv.innerHTML = `Iniciando...`;
-                }
+                if (statusDiv) { statusDiv.classList.remove('hidden'); statusDiv.innerHTML = `Descargando...`; }
                 if (progCont) progCont.classList.remove('hidden');
-
                 try {
-                    await fetch('/api/download', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({id, url, type: dlType, quality: quality})
-                    });
+                    await fetch('/api/download', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, url, type: dlType, quality})});
                     activeDownloads.add(id);
-                } catch(e) {
-                    if (statusDiv) {
-                        statusDiv.innerHTML = `Fallo de Red`;
-                        statusDiv.classList.replace('text-amber-400', 'text-red-500');
-                    }
-                }
+                } catch(e) {}
             }
-            
             selectedVideos.clear();
+            updateFab();
             pollProgress();
         }
 
         async function pollProgress() {
             if(activeDownloads.size === 0) return;
-
             try {
                 const res = await fetch('/api/progress');
                 const data = await res.json();
-
                 for (let id of activeDownloads) {
                     if(data[id] !== undefined) {
                         const statusDiv = document.getElementById(`status-${id}`);
                         const progBar = document.getElementById(`progress-bar-${id}`);
-                        const checkIcon = document.getElementById(`check-${id}`);
-                        
                         if(data[id] === 100) {
-                            if(statusDiv) {
-                                statusDiv.innerHTML = `<span class="text-emerald-400 font-black"><i class="fa-solid fa-check-double"></i> ÉXITO</span>`;
-                            }
+                            if(statusDiv) statusDiv.innerHTML = `✅ ¡Listo!`;
                             if(progBar) progBar.style.width = `100%`;
-                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-check text-emerald-500 text-xl drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"></i>`;
                             activeDownloads.delete(id);
-                            
-                            const card = document.getElementById(`card-${id}`);
-                            if(card) card.classList.add('opacity-50', 'grayscale-[50%]');
-                            
                         } else if(data[id] === -1) {
-                            if(statusDiv) {
-                                statusDiv.innerHTML = `<span class="text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ERROR</span>`;
-                            }
-                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-xmark text-rose-500 text-xl"></i>`;
+                            if(statusDiv) statusDiv.innerHTML = `❌ Error`;
                             activeDownloads.delete(id);
                         } else {
                             if(statusDiv) statusDiv.innerHTML = `${data[id].toFixed(1)}%`;
@@ -548,20 +502,9 @@
                         }
                     }
                 }
-            } catch(e) {
-                console.error("Error polling", e);
-            }
-
-            if(activeDownloads.size > 0) {
-                setTimeout(pollProgress, 1000);
-            }
+            } catch(e) {}
+            if(activeDownloads.size > 0) setTimeout(pollProgress, 1000);
         }
     </script>
-    <style>
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </body>
 </html>
