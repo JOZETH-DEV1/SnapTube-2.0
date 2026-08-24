@@ -21,11 +21,16 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 # Diccionario para rastrear el progreso de las descargas
 downloads_progress = {}
 
+def get_downloaded_files():
+    try:
+        return [f for f in os.listdir(DOWNLOAD_DIR) if os.path.isfile(os.path.join(DOWNLOAD_DIR, f))]
+    except:
+        return []
+
 class MyLogger:
     def __init__(self, video_id):
         self.video_id = video_id
     def debug(self, msg):
-        # yt-dlp manda el progreso a través de debug
         if "[download]" in msg and "%" in msg:
             try:
                 percent = msg.split("%")[0].split()[-1]
@@ -54,17 +59,27 @@ def search():
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # ytsearch200 buscará los primeros 200 resultados
             result = ydl.extract_info(f"ytsearch200:{query}", download=False)
             if 'entries' in result:
                 videos = []
+                downloaded_files = get_downloaded_files()
+                # Remove extensions for easier matching
+                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
+                
                 for entry in result['entries']:
+                    title = entry.get('title', '')
+                    # Reemplazo basico que suele hacer yt-dlp con caracteres invalidos
+                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                    
+                    is_downloaded = safe_title.lower() in downloaded_basenames
+                    
                     videos.append({
                         'id': entry.get('id'),
-                        'title': entry.get('title'),
+                        'title': title,
                         'channel': entry.get('uploader'),
                         'duration': entry.get('duration'),
-                        'url': entry.get('url')
+                        'url': entry.get('url'),
+                        'is_downloaded': is_downloaded
                     })
                 return jsonify(videos)
             return jsonify([])
@@ -92,7 +107,6 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
             'logger': MyLogger(video_id)
         }
     else:
-        # Configuración para Video
         ydl_opts = {
             'format': f'bestvideo[height<={quality}][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             'paths': {
@@ -112,7 +126,7 @@ def run_download(video_id, url, dl_type="audio", quality="720"):
         downloads_progress[video_id] = 100.0
     except Exception as e:
         print("Error en descarga:", e)
-        downloads_progress[video_id] = -1.0 # Error state
+        downloads_progress[video_id] = -1.0
 
 @app.route("/api/download", methods=["POST"])
 def download():
@@ -128,7 +142,6 @@ def download():
     if "youtube.com" not in url and "youtu.be" not in url:
         url = f"https://www.youtube.com/watch?v={video_id}"
 
-    # Iniciar descarga en un hilo en segundo plano
     threading.Thread(target=run_download, args=(video_id, url, dl_type, quality)).start()
     return jsonify({"status": "started", "id": video_id})
 

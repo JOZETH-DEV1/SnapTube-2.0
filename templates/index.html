@@ -1,239 +1,218 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snaptube Local</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JozethDev Downloader</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0f0f13; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .search-input { background: rgba(255,255,255,0.1); border: none; outline: none; transition: 0.3s; }
-        .search-input:focus { background: rgba(255,255,255,0.15); box-shadow: 0 0 0 2px #ec4899; }
-        
-        .progress-bar { transition: width 0.3s ease; }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f111a;
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-header {
+            background: rgba(15, 17, 26, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .search-bar {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-bar:focus-within {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #e11d48; /* Rose 600 */
+            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+        }
+        .video-card {
+            background: linear-gradient(145deg, rgba(30, 33, 44, 0.6) 0%, rgba(20, 22, 31, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .video-card.selected {
+            border-color: #e11d48;
+            background: linear-gradient(145deg, rgba(225, 29, 72, 0.1) 0%, rgba(20, 22, 31, 0.9) 100%);
+        }
+        .fab-gradient {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            box-shadow: 0 8px 25px -5px rgba(225, 29, 72, 0.5);
+        }
+        /* Loader de spinner */
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(225, 29, 72, 0.2);
+            border-radius: 50%;
+            border-top-color: #e11d48;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Skeletons */
+        .skeleton {
+            background: linear-gradient(90deg, #1e212c 25%, #252a36 50%, #1e212c 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        /* Download progress */
+        .progress-bar-fill {
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col pb-24">
+<body class="antialiased min-h-screen flex flex-col relative pb-24">
 
-    <!-- Header -->
-    <header class="glass sticky top-0 z-50 px-4 py-4 flex justify-between items-center shadow-lg">
-        <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
-            <i class="fa-solid fa-music mr-2 text-pink-500"></i>Snaptube<span class="font-light text-white">Local</span>
-        </h1>
+    <!-- Header & Search (Sticky) -->
+    <header class="glass-header sticky top-0 z-40 px-4 pt-5 pb-4">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex items-center justify-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/30">
+                    <i class="fa-solid fa-bolt text-white text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                    JozethDev <span class="text-rose-500">DL</span>
+                </h1>
+            </div>
+
+            <form id="search-form" class="relative">
+                <input type="text" id="search-input" placeholder="Pega un enlace o busca música..." 
+                       class="search-bar w-full py-4 pl-14 pr-4 rounded-2xl text-white outline-none transition-all placeholder-gray-500 font-medium">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl p-2 w-10 h-10 flex items-center justify-center transition shadow-lg">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
     </header>
 
-    <!-- Search Section -->
-    <main class="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
-        <form id="search-form" class="relative mb-8">
-            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input type="text" id="search-input" placeholder="Buscar canción..." 
-                class="w-full search-input rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-400 font-medium">
-            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-xl transition">
-                Buscar
-            </button>
-        </form>
-
-        <!-- Loader -->
-        <div id="loader" class="hidden text-center py-10">
-            <i class="fa-solid fa-circle-notch text-4xl text-pink-500 spin"></i>
-            <p class="mt-4 text-gray-400">Buscando...</p>
+    <!-- Main Content -->
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+        <!-- Contenedor de Skeletons (Oculto por defecto) -->
+        <div id="skeleton-container" class="hidden flex-col gap-4">
+            <!-- 3 Skeletons -->
+            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
+                <div class="w-32 h-20 rounded-xl skeleton flex-shrink-0"></div>
+                <div class="flex-1 py-1 space-y-3">
+                    <div class="h-4 bg-gray-800 rounded skeleton w-3/4"></div>
+                    <div class="h-3 bg-gray-800 rounded skeleton w-1/2"></div>
+                </div>
+            </div>
+            <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
+                <div class="w-32 h-20 rounded-xl skeleton flex-shrink-0"></div>
+                <div class="flex-1 py-1 space-y-3">
+                    <div class="h-4 bg-gray-800 rounded skeleton w-4/5"></div>
+                    <div class="h-3 bg-gray-800 rounded skeleton w-2/5"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Results -->
-        <div id="results" class="space-y-4"></div>
+        <!-- Contenedor de Resultados -->
+        <div id="results" class="flex flex-col gap-4">
+            <!-- Estado vacío (Inicio) -->
+            <div class="text-center py-20 opacity-50 flex flex-col items-center">
+                <i class="fa-solid fa-music text-5xl mb-4 text-gray-600"></i>
+                <p class="font-medium text-gray-400">Encuentra y descarga música al instante</p>
+            </div>
+        </div>
     </main>
 
-    <!-- Modal de Video -->
-    <div id="video-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-center items-center p-4 backdrop-blur-sm transition-opacity">
-        <div class="w-full max-w-2xl bg-gray-900 rounded-2xl overflow-hidden relative shadow-2xl border border-gray-700">
-            <button onclick="closeVideo()" class="absolute top-3 right-3 text-white bg-black/60 rounded-full w-10 h-10 z-10 flex items-center justify-center hover:bg-pink-600 transition">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-            <div class="aspect-video w-full" id="video-container"></div>
-        </div>
-        <p class="text-gray-400 mt-4 text-sm"><i class="fa-solid fa-info-circle"></i> Toca fuera del video para cerrar</p>
-    </div>
-
-    <!-- Modal de Opciones de Descarga -->
-    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-center items-center p-4 backdrop-blur-sm transition-opacity">
-        <div class="w-full max-w-sm bg-gray-900 rounded-2xl overflow-hidden relative shadow-2xl border border-gray-700 p-6">
-            <h2 class="text-xl font-bold mb-4 text-white">Opciones de Descarga</h2>
+    <!-- Modal de Configuración de Descarga -->
+    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/80 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-md transition-all opacity-0 pointer-events-none">
+        <div class="w-full sm:max-w-sm bg-[#151722] sm:rounded-3xl rounded-t-3xl overflow-hidden relative shadow-2xl border-t sm:border border-gray-700/50 p-6 transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="modal-content">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-white">Configurar Descarga</h2>
+                <button onclick="closeConfigModal()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
             
             <!-- Advertencia -->
-            <div class="mb-5 bg-yellow-500/20 border border-yellow-500/50 p-3 rounded-xl flex gap-3 items-start">
-                <i class="fa-solid fa-triangle-exclamation text-yellow-500 mt-1"></i>
-                <p class="text-xs text-yellow-200"><strong>ADVERTENCIA:</strong> Los videos descargados son solo para uso personal. Queda estrictamente prohibido resubirlos o distribuirlos sin permiso del creador.</p>
+            <div class="mb-6 bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl flex gap-3 items-start">
+                <i class="fa-solid fa-circle-info text-yellow-500 mt-1"></i>
+                <p class="text-xs text-yellow-200/80 leading-relaxed"><strong>Para uso personal:</strong> JozethDev Downloader no se responsabiliza por la distribución no autorizada de contenido protegido.</p>
             </div>
 
-            <label class="block text-sm font-medium mb-2 text-gray-300">Formato</label>
-            <select id="dl-type" class="w-full bg-gray-800 text-white rounded-xl p-3 mb-4 border border-gray-700 outline-none focus:border-pink-500 transition" onchange="toggleQuality(this.value)">
-                <option value="audio">🎵 Audio (MP3)</option>
-                <option value="video">🎥 Video (MP4)</option>
-            </select>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold tracking-wider text-gray-500 uppercase mb-2">Formato de Archivo</label>
+                    <select id="dl-type" class="w-full bg-[#1e212c] text-white rounded-xl p-4 border border-gray-700/50 outline-none focus:border-rose-500 transition-colors appearance-none font-medium" onchange="toggleQuality(this.value)">
+                        <option value="audio">🎵 Audio de alta calidad (MP3)</option>
+                        <option value="video">🎥 Video completo (MP4)</option>
+                    </select>
+                </div>
 
-            <div id="quality-container" class="hidden">
-                <label class="block text-sm font-medium mb-2 text-gray-300">Calidad de Video</label>
-                <select id="dl-quality" class="w-full bg-gray-800 text-white rounded-xl p-3 mb-6 border border-gray-700 outline-none focus:border-pink-500 transition">
-                    <option value="1080">1080p (Full HD)</option>
-                    <option value="720" selected>720p (HD)</option>
-                    <option value="480">480p (Normal)</option>
-                    <option value="360">360p (Baja)</option>
-                </select>
+                <div id="quality-container" class="hidden">
+                    <label class="block text-xs font-bold tracking-wider text-gray-500 uppercase mb-2">Calidad Visual</label>
+                    <select id="dl-quality" class="w-full bg-[#1e212c] text-white rounded-xl p-4 border border-gray-700/50 outline-none focus:border-rose-500 transition-colors appearance-none font-medium">
+                        <option value="1080">1080p (Full HD)</option>
+                        <option value="720" selected>720p (HD)</option>
+                        <option value="480">480p (Estándar)</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeConfigModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl transition">Cancelar</button>
-                <button onclick="confirmDownload()" class="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-xl transition">Descargar</button>
-            </div>
+            <button onclick="confirmDownload()" class="w-full fab-gradient text-white font-bold py-4 px-4 rounded-xl mt-8 transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Iniciar Descarga
+            </button>
         </div>
     </div>
 
     <!-- Floating Action Button -->
-    <div id="fab" class="hidden fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
-        <button onclick="openConfigModal()" class="pointer-events-auto bg-gradient-to-r from-pink-600 to-violet-600 text-white font-bold py-4 px-8 rounded-full shadow-[0_10px_40px_rgba(236,72,153,0.4)] transform hover:scale-105 transition flex items-center gap-3">
-            <i class="fa-solid fa-download text-xl"></i>
-            <span id="fab-text">Descargar 0 seleccionadas</span>
+    <div id="fab" class="hidden fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none px-4">
+        <button onclick="openConfigModal()" class="pointer-events-auto fab-gradient text-white font-bold py-4 px-8 rounded-2xl transform transition hover:-translate-y-1 active:translate-y-0 flex items-center justify-between w-full max-w-sm">
+            <span class="flex items-center gap-3">
+                <i class="fa-solid fa-layer-group text-lg"></i>
+                <span id="fab-text" class="text-sm">0 seleccionados</span>
+            </span>
+            <span class="bg-white/20 px-3 py-1 rounded-lg text-xs tracking-wider uppercase">Siguiente</span>
         </button>
+    </div>
+
+    <!-- Modal Reproductor (Minimalista) -->
+    <div id="video-modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex-col justify-center items-center p-4 backdrop-blur-xl">
+        <div class="w-full max-w-3xl relative">
+            <button onclick="closeVideo()" class="absolute -top-12 right-0 text-white/50 hover:text-white text-xl p-2 transition">
+                <i class="fa-solid fa-xmark"></i> Cerrar
+            </button>
+            <div class="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-[#111] ring-1 ring-white/10" id="video-container"></div>
+        </div>
     </div>
 
     <script>
         const form = document.getElementById('search-form');
         const input = document.getElementById('search-input');
         const resultsDiv = document.getElementById('results');
-        const loader = document.getElementById('loader');
+        const skeletonContainer = document.getElementById('skeleton-container');
         const fab = document.getElementById('fab');
         const fabText = document.getElementById('fab-text');
         const videoModal = document.getElementById('video-modal');
         const configModal = document.getElementById('config-modal');
+        const modalContent = document.getElementById('modal-content');
 
+        let allVideos = [];
         let activeDownloads = new Set();
         let selectedVideos = new Map(); 
 
-        function openConfigModal() {
-            configModal.classList.remove('hidden');
-            configModal.classList.add('flex');
-            fab.classList.add('hidden'); // Ocultar boton flotante
-        }
-
-        function closeConfigModal() {
-            configModal.classList.add('hidden');
-            configModal.classList.remove('flex');
-            updateFab(); // Restaurar el fab si hay items
-        }
-
-        function toggleQuality(type) {
-            const container = document.getElementById('quality-container');
-            if (type === 'video') container.classList.remove('hidden');
-            else container.classList.add('hidden');
-        }
-
-        // Cerrar modal tocando el fondo
-        videoModal.addEventListener('click', (e) => {
-            if (e.target === videoModal) closeVideo();
-        });
-
-        function openVideo(e, id) {
-            e.stopPropagation(); // Evitar seleccionar la canción
-            const container = document.getElementById('video-container');
-            container.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-            videoModal.classList.remove('hidden');
-            videoModal.classList.add('flex');
-        }
-
-        function closeVideo() {
-            document.getElementById('video-container').innerHTML = '';
-            videoModal.classList.add('hidden');
-            videoModal.classList.remove('flex');
-        }
-
-        function updateFab() {
-            if (selectedVideos.size > 0) {
-                fab.classList.remove('hidden');
-                fabText.innerText = `Descargar ${selectedVideos.size} seleccionada${selectedVideos.size>1?'s':''}`;
-            } else {
-                fab.classList.add('hidden');
+        // Infinte Scroll
+        let currentRenderLimit = 10;
+        let observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && currentRenderLimit < allVideos.length) {
+                currentRenderLimit += 10;
+                renderVideos(false); // Append
             }
-        }
+        }, { rootMargin: "200px" });
 
-        function toggleSelect(id, url) {
-            const card = document.getElementById(`card-${id}`);
-            const check = document.getElementById(`check-${id}`);
-            
-            if (selectedVideos.has(id)) {
-                selectedVideos.delete(id);
-                card.classList.remove('ring-2', 'ring-pink-500');
-                check.classList.replace('text-pink-500', 'text-gray-500');
-                check.classList.replace('fa-circle-check', 'fa-circle');
-            } else {
-                selectedVideos.set(id, url);
-                card.classList.add('ring-2', 'ring-pink-500');
-                check.classList.replace('text-gray-500', 'text-pink-500');
-                check.classList.replace('fa-circle', 'fa-circle-check');
-            }
-            updateFab();
-        }
-
-        let currentResults = [];
-        let renderIndex = 0;
-        const CHUNK_SIZE = 10;
-
-        // Intersection Observer para el scroll infinito
-        const observer = new IntersectionObserver((entries) => {
-            if(entries[0].isIntersecting && currentResults.length > 0) {
-                renderMoreResults();
-            }
-        }, { rootMargin: '200px' });
-
-        function renderMoreResults() {
-            const chunk = currentResults.slice(renderIndex, renderIndex + CHUNK_SIZE);
-            if (chunk.length === 0) return;
-            
-            // Si ya no hay más, dejamos de observar temporalmente
-            if (renderIndex + CHUNK_SIZE >= currentResults.length) {
-                const sentinel = document.getElementById('scroll-sentinel');
-                if (sentinel) observer.unobserve(sentinel);
-            }
-
-            chunk.forEach(video => {
-                const duration = video.duration ? new Date(video.duration * 1000).toISOString().substr(14, 5) : '--:--';
-                const thumbnail = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
-                const isSelected = selectedVideos.has(video.id);
-                
-                const card = document.createElement('div');
-                card.id = `card-${video.id}`;
-                card.className = `glass rounded-2xl p-3 flex gap-4 items-center overflow-hidden relative cursor-pointer transition ${isSelected ? 'ring-2 ring-pink-500' : ''}`;
-                card.onclick = () => toggleSelect(video.id, video.url);
-                
-                card.innerHTML = `
-                    <div class="pl-2">
-                        <i id="check-${video.id}" class="${isSelected ? 'fa-solid fa-circle-check text-pink-500' : 'fa-regular fa-circle text-gray-500'} text-2xl transition"></i>
-                    </div>
-                    <div class="relative group" onclick="openVideo(event, '${video.id}')">
-                        <img src="${thumbnail}" class="w-24 h-16 object-cover rounded-lg shadow-md" alt="thumb">
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg opacity-90 hover:bg-pink-600/80 transition">
-                            <i class="fa-solid fa-play text-white text-xl drop-shadow-md"></i>
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-0 pr-2">
-                        <h3 class="font-semibold text-white truncate text-sm mb-1">${video.title}</h3>
-                        <p class="text-xs text-gray-400 truncate">${video.channel} • ${duration}</p>
-                        
-                        <div id="status-${video.id}" class="text-xs font-bold mt-2 text-pink-400 hidden">
-                        </div>
-                    </div>
-                    <div id="progress-container-${video.id}" class="absolute bottom-0 left-0 h-1 w-full bg-white/5 hidden">
-                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-pink-500 to-violet-500 progress-bar w-0"></div>
-                    </div>
-                `;
-                resultsDiv.insertBefore(card, document.getElementById('scroll-sentinel'));
-            });
-            renderIndex += CHUNK_SIZE;
+        function formatDuration(seconds) {
+            if(!seconds) return "??:??";
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
         }
 
         form.addEventListener('submit', async (e) => {
@@ -241,40 +220,197 @@
             const query = input.value.trim();
             if(!query) return;
 
-            resultsDiv.innerHTML = '<div id="scroll-sentinel" class="h-10"></div>';
-            loader.classList.remove('hidden');
-            currentResults = [];
-            renderIndex = 0;
+            // Reset
+            resultsDiv.innerHTML = '';
+            selectedVideos.clear();
+            updateFab();
+            
+            // Show skeletons
+            skeletonContainer.classList.remove('hidden');
+            skeletonContainer.classList.add('flex');
 
             try {
-                // Buscamos 100 resultados de golpe en el backend
                 const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
-                loader.classList.add('hidden');
+                allVideos = data;
+                currentRenderLimit = 10;
+                
+                skeletonContainer.classList.add('hidden');
+                skeletonContainer.classList.remove('flex');
                 
                 if(data.length === 0) {
-                    resultsDiv.innerHTML = '<p class="text-center text-gray-500 mt-10">No se encontraron resultados.</p>';
+                    resultsDiv.innerHTML = `<div class="text-center py-10 text-gray-500">No se encontraron resultados</div>`;
                     return;
                 }
-
-                currentResults = data;
-                renderMoreResults();
                 
-                // Empezar a observar el final de la lista
-                const sentinel = document.getElementById('scroll-sentinel');
-                if (sentinel) observer.observe(sentinel);
-
-            } catch (err) {
-                loader.classList.add('hidden');
-                resultsDiv.innerHTML = '<p class="text-center text-red-400 mt-10">Error al buscar.</p>';
+                renderVideos(true);
+            } catch(e) {
+                skeletonContainer.classList.add('hidden');
+                resultsDiv.innerHTML = `<div class="text-center py-10 text-rose-500"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i><br>Error de conexión</div>`;
             }
         });
 
+        function renderVideos(clearFirst = true) {
+            if(clearFirst) {
+                resultsDiv.innerHTML = '';
+                // Crear un trigger element invisible para el observer
+                const trigger = document.createElement('div');
+                trigger.id = "scroll-trigger";
+                trigger.className = "h-4 w-full mt-4";
+                resultsDiv.appendChild(trigger);
+            }
+
+            const trigger = document.getElementById('scroll-trigger');
+            const startIndex = clearFirst ? 0 : currentRenderLimit - 10;
+            const chunk = allVideos.slice(startIndex, currentRenderLimit);
+
+            const fragment = document.createDocumentFragment();
+
+            chunk.forEach(video => {
+                const isSelected = selectedVideos.has(video.id);
+                const isDownloading = activeDownloads.has(video.id);
+                
+                // Badges
+                let statusBadge = '';
+                if (video.is_downloaded) {
+                    statusBadge = `<div class="absolute top-2 left-2 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg border border-emerald-400/30 flex items-center gap-1"><i class="fa-solid fa-check"></i> En Biblioteca</div>`;
+                }
+                const durationBadge = `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-[10px] font-medium px-2 py-1 rounded-md">${formatDuration(video.duration)}</div>`;
+
+                const card = document.createElement('div');
+                card.id = `card-${video.id}`;
+                // Apply visual states
+                let borderClass = isSelected ? 'border-rose-500 bg-rose-500/5' : 'border-gray-800/50';
+                let opacityClass = video.is_downloaded ? 'opacity-60 grayscale-[30%]' : '';
+                
+                card.className = `video-card flex gap-3 p-3 rounded-2xl cursor-pointer select-none relative ${borderClass} ${opacityClass}`;
+                
+                if (!isDownloading) {
+                    card.onclick = (e) => toggleSelection(e, video.id, video.url);
+                }
+
+                card.innerHTML = `
+                    <div class="relative w-36 h-24 flex-shrink-0 rounded-xl overflow-hidden shadow-inner group">
+                        <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" class="w-full h-full object-cover transform transition duration-500 group-hover:scale-110" loading="lazy">
+                        ${statusBadge}
+                        ${durationBadge}
+                        <button onclick="playVideo(event, '${video.id}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-play text-white text-2xl drop-shadow-md"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-col justify-between py-1 pr-2 w-full min-w-0">
+                        <div>
+                            <h3 class="font-bold text-sm text-gray-100 leading-snug line-clamp-2 mb-1">${video.title}</h3>
+                            <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1"><i class="fa-regular fa-circle-user"></i> ${video.channel}</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-2">
+                            <div id="status-${video.id}" class="text-xs font-bold text-rose-400 hidden"></div>
+                            
+                            <div class="w-6 h-6 rounded-full border-2 ${isSelected ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-600 bg-transparent text-transparent'} flex items-center justify-center transition-colors shadow-sm ml-auto" id="check-${video.id}">
+                                <i class="fa-solid fa-check text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de progreso absoluta inferior -->
+                    <div id="progress-container-${video.id}" class="hidden absolute bottom-0 left-0 right-0 h-1 bg-gray-800/50 rounded-b-2xl overflow-hidden">
+                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-rose-500 to-fuchsia-500 progress-bar-fill shadow-[0_0_10px_rgba(225,29,72,0.8)]" style="width: 0%"></div>
+                    </div>
+                `;
+                fragment.appendChild(card);
+            });
+
+            // Insertar antes del trigger de scroll
+            resultsDiv.insertBefore(fragment, trigger);
+            
+            // Re-observar el trigger
+            observer.disconnect();
+            if(trigger) observer.observe(trigger);
+        }
+
+        function toggleSelection(e, id, url) {
+            if(e.target.closest('button')) return; // Evitar clic si tocan el play
+            
+            const card = document.getElementById(`card-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if(selectedVideos.has(id)) {
+                selectedVideos.delete(id);
+                card.classList.remove('border-rose-500', 'bg-rose-500/5');
+                card.classList.add('border-gray-800/50');
+                check.className = "w-6 h-6 rounded-full border-2 border-gray-600 bg-transparent text-transparent flex items-center justify-center transition-colors ml-auto shadow-sm";
+            } else {
+                selectedVideos.set(id, url);
+                card.classList.remove('border-gray-800/50');
+                card.classList.add('border-rose-500', 'bg-rose-500/5');
+                check.className = "w-6 h-6 rounded-full border-2 border-rose-500 bg-rose-500 text-white flex items-center justify-center transition-colors ml-auto shadow-sm";
+            }
+            updateFab();
+        }
+
+        function updateFab() {
+            if(selectedVideos.size > 0) {
+                fab.classList.remove('hidden');
+                fabText.textContent = `${selectedVideos.size} pista${selectedVideos.size > 1 ? 's' : ''} lista${selectedVideos.size > 1 ? 's' : ''}`;
+            } else {
+                fab.classList.add('hidden');
+            }
+        }
+
+        // --- Modals y UI Lógica ---
+        function openConfigModal() {
+            configModal.classList.remove('hidden');
+            // Timeout para permitir el render y animar la opacidad/transformación
+            setTimeout(() => {
+                configModal.classList.remove('opacity-0', 'pointer-events-none');
+                modalContent.classList.remove('translate-y-full');
+            }, 10);
+            fab.classList.add('hidden');
+        }
+
+        function closeConfigModal() {
+            configModal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.add('translate-y-full');
+            setTimeout(() => {
+                configModal.classList.add('hidden');
+            }, 300);
+            updateFab(); 
+        }
+
+        function toggleQuality(type) {
+            const container = document.getElementById('quality-container');
+            if (type === 'video') {
+                container.classList.remove('hidden');
+                // Animar entrada
+                container.style.opacity = '0';
+                setTimeout(() => { container.style.transition = 'opacity 0.3s'; container.style.opacity = '1'; }, 10);
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function playVideo(e, id) {
+            e.stopPropagation(); // Evita seleccionar
+            const container = document.getElementById('video-container');
+            container.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            videoModal.classList.remove('hidden');
+            videoModal.classList.add('flex');
+        }
+
+        function closeVideo() {
+            videoModal.classList.add('hidden');
+            videoModal.classList.remove('flex');
+            document.getElementById('video-container').innerHTML = ''; // Detiene el video
+        }
+
+        // --- Descargas ---
         async function confirmDownload() {
             const dlType = document.getElementById('dl-type').value;
             const quality = document.getElementById('dl-quality').value;
             
-            closeConfigModal(); // Oculta el modal de configuracion
+            closeConfigModal(); 
             
             for (let [id, url] of selectedVideos.entries()) {
                 const statusDiv = document.getElementById(`status-${id}`);
@@ -283,14 +419,18 @@
                 const checkIcon = document.getElementById(`check-${id}`);
                 
                 if (card) {
-                    card.onclick = null;
-                    card.classList.remove('cursor-pointer', 'ring-2', 'ring-pink-500');
+                    card.onclick = null; // deshabilitar clic
+                    card.classList.remove('cursor-pointer', 'border-rose-500', 'bg-rose-500/5');
+                    card.classList.add('border-gray-800/50');
                 }
-                if (checkIcon) checkIcon.className = "fa-solid fa-spinner spin text-xl text-pink-500";
+                if (checkIcon) {
+                    checkIcon.className = "w-6 h-6 flex items-center justify-center ml-auto";
+                    checkIcon.innerHTML = `<i class="fa-solid fa-circle-notch spin text-rose-500 text-lg"></i>`;
+                }
                 
                 if (statusDiv) {
                     statusDiv.classList.remove('hidden');
-                    statusDiv.innerHTML = `<i class="fa-solid fa-circle-notch spin"></i> Iniciando...`;
+                    statusDiv.innerHTML = `Preparando...`;
                 }
                 if (progCont) progCont.classList.remove('hidden');
 
@@ -303,8 +443,8 @@
                     activeDownloads.add(id);
                 } catch(e) {
                     if (statusDiv) {
-                        statusDiv.innerHTML = `<i class="fa-solid fa-xmark"></i> Error`;
-                        statusDiv.classList.replace('text-pink-400', 'text-red-500');
+                        statusDiv.innerHTML = `Fallo de Red`;
+                        statusDiv.classList.replace('text-rose-400', 'text-red-500');
                     }
                 }
             }
@@ -313,53 +453,50 @@
             pollProgress();
         }
 
-        let pollInterval = null;
-        function pollProgress() {
-            if(pollInterval) return; 
-            
-            pollInterval = setInterval(async () => {
-                if(activeDownloads.size === 0) {
-                    clearInterval(pollInterval);
-                    pollInterval = null;
-                    return;
-                }
+        async function pollProgress() {
+            if(activeDownloads.size === 0) return;
 
-                try {
-                    const res = await fetch('/api/progress');
-                    const progressData = await res.json();
-                    
-                    for(let id of activeDownloads) {
-                        if(progressData[id] !== undefined) {
-                            const pct = progressData[id];
-                            const statusDiv = document.getElementById(`status-${id}`);
-                            const bar = document.getElementById(`progress-bar-${id}`);
-                            const checkIcon = document.getElementById(`check-${id}`);
-                            
-                            if(pct === -1) {
-                                if (statusDiv) {
-                                    statusDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Falló`;
-                                    statusDiv.classList.replace('text-pink-400', 'text-red-500');
-                                }
-                                if (checkIcon) checkIcon.className = "fa-solid fa-xmark text-xl text-red-500";
-                                activeDownloads.delete(id);
-                            } else if(pct === 100) {
-                                if (statusDiv) {
-                                    statusDiv.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado en Música!`;
-                                    statusDiv.classList.replace('text-pink-400', 'text-green-400');
-                                }
-                                if (bar) bar.style.width = '100%';
-                                if (checkIcon) checkIcon.className = "fa-solid fa-check-circle text-xl text-green-500";
-                                activeDownloads.delete(id);
-                            } else {
-                                if (statusDiv) statusDiv.innerHTML = `<i class="fa-solid fa-circle-notch spin"></i> Descargando: ${pct}%`;
-                                if (bar) bar.style.width = `${pct}%`;
+            try {
+                const res = await fetch('/api/progress');
+                const data = await res.json();
+
+                for (let id of activeDownloads) {
+                    if(data[id] !== undefined) {
+                        const statusDiv = document.getElementById(`status-${id}`);
+                        const progBar = document.getElementById(`progress-bar-${id}`);
+                        const checkIcon = document.getElementById(`check-${id}`);
+                        
+                        if(data[id] === 100) {
+                            if(statusDiv) {
+                                statusDiv.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check-double"></i> Terminado</span>`;
                             }
+                            if(progBar) progBar.style.width = `100%`;
+                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-check text-emerald-500 text-lg"></i>`;
+                            activeDownloads.delete(id);
+                            
+                            // Añadir opacidad indicando que ya está descargado
+                            const card = document.getElementById(`card-${id}`);
+                            if(card) card.classList.add('opacity-60', 'grayscale-[30%]');
+                            
+                        } else if(data[id] === -1) {
+                            if(statusDiv) {
+                                statusDiv.innerHTML = `<span class="text-red-500"><i class="fa-solid fa-xmark"></i> Error</span>`;
+                            }
+                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>`;
+                            activeDownloads.delete(id);
+                        } else {
+                            if(statusDiv) statusDiv.innerHTML = `${data[id].toFixed(1)}%`;
+                            if(progBar) progBar.style.width = `${data[id]}%`;
                         }
                     }
-                } catch (e) {
-                    console.error("Error polling", e);
                 }
-            }, 1000);
+            } catch(e) {
+                console.error("Error polling", e);
+            }
+
+            if(activeDownloads.size > 0) {
+                setTimeout(pollProgress, 1000);
+            }
         }
     </script>
 </body>
