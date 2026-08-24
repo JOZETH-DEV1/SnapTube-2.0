@@ -128,44 +128,43 @@ import random
 @app.route("/api/fyp")
 def fyp():
     history = load_history()
-    query = "top hits musica"
+    
+    queries = ["top hits musica actual", "canciones mas escuchadas", "musica viral"]
     
     if history:
-        # Extraer títulos limpios de los últimos 5
-        recent = history[-5:]
-        titles = []
-        for v in recent:
-            t = v.get('title', '')
-            t = re.sub(r'\(.*?\)|\[.*?\]', '', t).strip()
-            if t: titles.append(t)
-            
-        if titles:
-            chosen_title = random.choice(titles)
-            query = f"{chosen_title} mix"
+        recent = history[-10:]
+        channels = list(set([v.get('channel', '') for v in recent if v.get('channel')]))
+        if channels:
+            random.shuffle(channels)
+            chosen_channels = channels[:2] # Pick up to 2 random artists
+            queries = [f"{c} grandes exitos" for c in chosen_channels]
             
     ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
+    
     try:
+        all_videos = []
+        seen_titles = set()
+        downloaded_files = get_downloaded_files()
+        downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
+        
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(f"ytsearch20:{query}", download=False)
-            if 'entries' in result:
-                videos = []
-                seen_titles = set()
-                downloaded_files = get_downloaded_files()
-                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
-                for entry in result['entries']:
-                    title = entry.get('title', '')
-                    if is_duplicate(title, seen_titles): continue
-                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
-                    videos.append({
-                        'id': entry.get('id'),
-                        'title': title,
-                        'channel': entry.get('uploader'),
-                        'duration': entry.get('duration'),
-                        'url': entry.get('url'),
-                        'is_downloaded': safe_title.lower() in downloaded_basenames
-                    })
-                return jsonify(videos)
-            return jsonify([])
+            for q in queries:
+                result = ydl.extract_info(f"ytsearch15:{q}", download=False)
+                if 'entries' in result:
+                    for entry in result['entries']:
+                        title = entry.get('title', '')
+                        if is_duplicate(title, seen_titles): continue
+                        safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                        all_videos.append({
+                            'id': entry.get('id'),
+                            'title': title,
+                            'channel': entry.get('uploader'),
+                            'duration': entry.get('duration'),
+                            'url': entry.get('url'),
+                            'is_downloaded': safe_title.lower() in downloaded_basenames
+                        })
+        random.shuffle(all_videos)
+        return jsonify(all_videos[:30]) # Return 30 mixed results
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -175,26 +174,33 @@ def radio():
     ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(f"ytsearch20:{channel} exitos mix", download=False)
-            if 'entries' in result:
-                videos = []
-                seen_titles = set()
-                downloaded_files = get_downloaded_files()
-                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
-                for entry in result['entries']:
-                    title = entry.get('title', '')
-                    if is_duplicate(title, seen_titles): continue
-                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
-                    videos.append({
-                        'id': entry.get('id'),
-                        'title': title,
-                        'channel': entry.get('uploader'),
-                        'duration': entry.get('duration'),
-                        'url': entry.get('url'),
-                        'is_downloaded': safe_title.lower() in downloaded_basenames
-                    })
-                return jsonify(videos)
-            return jsonify([])
+            # Buscar mix del artista, y también canciones populares generales
+            result1 = ydl.extract_info(f"ytsearch15:{channel} exitos", download=False)
+            result2 = ydl.extract_info(f"ytsearch10:{channel} mix", download=False)
+            
+            entries = []
+            if 'entries' in result1: entries.extend(result1['entries'])
+            if 'entries' in result2: entries.extend(result2['entries'])
+            
+            videos = []
+            seen_titles = set()
+            downloaded_files = get_downloaded_files()
+            downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
+            
+            for entry in entries:
+                title = entry.get('title', '')
+                if is_duplicate(title, seen_titles): continue
+                safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                videos.append({
+                    'id': entry.get('id'),
+                    'title': title,
+                    'channel': entry.get('uploader'),
+                    'duration': entry.get('duration'),
+                    'url': entry.get('url'),
+                    'is_downloaded': safe_title.lower() in downloaded_basenames
+                })
+            random.shuffle(videos)
+            return jsonify(videos)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
