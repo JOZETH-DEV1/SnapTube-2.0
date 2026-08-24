@@ -4,6 +4,10 @@ echo "🚀 Instalando JozethDev Premium en Termux"
 echo "======================================"
 sleep 1
 
+echo "📱 Solicitando permisos de almacenamiento..."
+termux-setup-storage
+sleep 2
+
 # Actualizar e instalar dependencias del sistema
 echo "[1/4] Actualizando sistema..."
 pkg update -y && pkg upgrade -y
