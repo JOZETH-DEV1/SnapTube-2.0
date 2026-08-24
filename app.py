@@ -123,21 +123,47 @@ def fyp():
     query = "top hits musica"
     
     if history:
-        # Extract keywords from recent history
+        # Extraer canales de los ultimos 5 videos para recomendar
         recent = history[-5:]
-        words = []
-        for v in recent:
-            title_words = re.sub(r'[^a-zA-Z0-9\s]', '', v.get('title', '')).split()
-            words.extend([w for w in title_words if len(w) > 3])
-        
-        if words:
-            query = " ".join(random.sample(words, min(3, len(words))))
-            query += " musica"
+        channels = [v.get('channel', '') for v in recent if v.get('channel')]
+        if channels:
+            # Elegir un canal al azar del historial y buscar su mix
+            chosen_channel = random.choice(channels)
+            query = f"{chosen_channel} mix musica"
             
     ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             result = ydl.extract_info(f"ytsearch20:{query}", download=False)
+            if 'entries' in result:
+                videos = []
+                seen_titles = set()
+                downloaded_files = get_downloaded_files()
+                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
+                for entry in result['entries']:
+                    title = entry.get('title', '')
+                    if is_duplicate(title, seen_titles): continue
+                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                    videos.append({
+                        'id': entry.get('id'),
+                        'title': title,
+                        'channel': entry.get('uploader'),
+                        'duration': entry.get('duration'),
+                        'url': entry.get('url'),
+                        'is_downloaded': safe_title.lower() in downloaded_basenames
+                    })
+                return jsonify(videos)
+            return jsonify([])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/radio")
+def radio():
+    channel = request.args.get("channel", "")
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'noplaylist': True}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(f"ytsearch20:{channel} exitos mix", download=False)
             if 'entries' in result:
                 videos = []
                 seen_titles = set()
@@ -178,8 +204,11 @@ def stream():
     if not video_id:
         return jsonify({"error": "No ID provided"}), 400
         
+    # El formato 18 es MP4 360p que SIEMPRE tiene audio+video unificado (ideal para navegadores)
+    # bestaudio para solo audio
+    format_selector = 'bestaudio/best' if audio_only else '18/best[ext=mp4][height<=480]/best'
     ydl_opts = {
-        'format': 'bestaudio/best' if audio_only else 'best[ext=mp4]/best',
+        'format': format_selector,
         'quiet': True,
         'nocheckcertificate': True,
     }

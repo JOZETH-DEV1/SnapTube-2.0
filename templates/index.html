@@ -622,9 +622,8 @@
             currentStreamVideo = video;
             currentStreamId = video.id;
 
-            if (updateQueue) {
-                if (currentMode === 'player') currentQueue = [...allVideos];
-                else if (currentMode === 'playlists' && currentDetailPlaylist) currentQueue = [...playlistsData[currentDetailPlaylist]];
+            if (updateQueue && currentMode === 'playlists' && currentDetailPlaylist) {
+                currentQueue = [...playlistsData[currentDetailPlaylist]];
             }
 
             fetch('/api/history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(video) }).catch(console.error);
@@ -632,15 +631,35 @@
             const playerUI = document.getElementById('global-player');
             playerUI.classList.add('active');
             
-            document.getElementById('player-title').textContent = video.title;
-            document.getElementById('player-channel').textContent = video.channel;
+            document.getElementById('player-title').textContent = "Cargando audio...";
+            document.getElementById('player-channel').textContent = "Extrayendo enlace directo...";
             document.getElementById('player-thumb').src = `https://i.ytimg.com/vi/${video.id}/default.jpg`;
             
             playPauseBtn.innerHTML = `<i class="fa-solid fa-spinner spin text-xl"></i>`;
+            // Deshabilitar botón mientras carga para evitar bugs
+            playPauseBtn.style.pointerEvents = 'none';
             
+            // Si es desde búsqueda, construimos una Radio Inteligente en segundo plano
+            if (updateQueue && currentMode === 'player') {
+                currentQueue = [video]; // Temporalmente es el único
+                fetch(`/api/radio?channel=${encodeURIComponent(video.channel)}`)
+                    .then(r => r.json())
+                    .then(radioData => {
+                        if(radioData && radioData.length > 0) {
+                            // Filtramos el actual para no repetirlo
+                            const filtered = radioData.filter(v => v.id !== video.id);
+                            currentQueue = [video, ...filtered];
+                        }
+                    }).catch(console.error);
+            }
+
             try {
                 const res = await fetch(`/api/stream?id=${video.id}&audio_only=${isAudioOnlyMode}`);
                 const data = await res.json();
+                
+                document.getElementById('player-title').textContent = video.title;
+                document.getElementById('player-channel').textContent = video.channel;
+
                 if(data.error) throw new Error();
                 
                 if (isAudioOnlyMode) {
@@ -664,8 +683,12 @@
                     navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
                 }
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
+                playPauseBtn.style.pointerEvents = 'auto';
             } catch(e) {
+                document.getElementById('player-title').textContent = "Error al cargar";
+                document.getElementById('player-channel').textContent = "Saltando a la siguiente...";
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-red-500"></i>`;
+                playPauseBtn.style.pointerEvents = 'auto';
                 setTimeout(playNextSong, 3000);
             }
         }
