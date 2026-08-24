@@ -136,11 +136,7 @@
             </div>
 
             <div id="results" class="flex flex-col gap-4">
-                <div class="text-center py-20 opacity-40">
-                    <i class="fa-solid fa-music text-5xl text-amber-500/50 mb-4"></i>
-                    <h2 class="text-xl font-bold text-gray-300">¿Qué quieres escuchar?</h2>
-                    <p class="text-gray-500 mt-2">Streaming sin anuncios y descargas HD</p>
-                </div>
+                <!-- Se inyecta dinámicamente -->
             </div>
         </div>
 
@@ -186,7 +182,6 @@
                     <p id="player-channel" class="text-xs text-gray-400 truncate">Canal</p>
                 </div>
                 
-                <!-- Botón Añadir a Playlist del Reproductor -->
                 <button onclick="openAddToPlaylistModal(currentStreamVideo)" class="w-10 h-10 rounded-full bg-gray-800 text-gray-400 flex items-center justify-center transition hover:text-white">
                     <i class="fa-solid fa-list-ul"></i>
                 </button>
@@ -209,8 +204,6 @@
     </div>
 
     <!-- Modals Varios -->
-
-    <!-- Modal Config Descarga -->
     <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
         <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl p-6 border-t border-gray-800 transform translate-y-full transition-transform duration-300" id="modal-content">
             <div class="flex justify-between items-center mb-6">
@@ -233,7 +226,6 @@
         </div>
     </div>
 
-    <!-- Modal Añadir a Playlist -->
     <div id="add-playlist-modal" class="fixed inset-0 z-[110] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
         <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl p-6 border-t border-gray-800 transform translate-y-full transition-transform duration-300" id="playlist-modal-content">
             <div class="flex justify-between items-center mb-6">
@@ -286,9 +278,9 @@
         let currentMode = 'player'; 
         
         let playlistsData = {};
-        let videoToAdd = null; // Guarda temporalmente el video que se añadirá
+        let videoToAdd = null; 
+        let currentQueue = [];
         
-        // REPRODUCTOR
         let currentStreamVideo = null;
         let currentStreamId = null;
         let isAudioOnlyMode = true;
@@ -308,7 +300,33 @@
                 renderPlaylistsTab();
             } catch(e) {}
         }
+        
+        async function loadFYP() {
+            skeleton.classList.remove('hidden');
+            skeleton.classList.add('flex');
+            resultsDiv.innerHTML = '';
+            document.getElementById('search-input').value = '';
+            try {
+                const res = await fetch('/api/fyp');
+                allVideos = await res.json();
+                skeleton.classList.add('hidden');
+                
+                if(allVideos.length > 0) {
+                    const title = document.createElement('h2');
+                    title.className = "text-xl font-bold text-white mb-2 mt-2 flex items-center gap-2";
+                    title.innerHTML = `<i class="fa-solid fa-fire text-amber-500"></i> Para Ti`;
+                    resultsDiv.appendChild(title);
+                    renderVideos(false); 
+                } else {
+                    resultsDiv.innerHTML = `<div class="text-center py-20 opacity-40"><i class="fa-solid fa-music text-5xl text-amber-500/50 mb-4"></i><h2 class="text-xl font-bold text-gray-300">¿Qué quieres escuchar?</h2></div>`;
+                }
+            } catch(e) {
+                skeleton.classList.add('hidden');
+            }
+        }
+
         loadPlaylists();
+        loadFYP();
 
         function switchTab(mode) {
             currentMode = mode;
@@ -319,20 +337,26 @@
             document.getElementById('view-search').classList.toggle('active', mode === 'player' || mode === 'download');
             document.getElementById('view-playlists').classList.toggle('active', mode === 'playlists');
             
-            // Ocultar barra de búsqueda si estamos en playlists
             const searchForms = document.querySelectorAll('.tab-search-only');
             searchForms.forEach(f => f.style.display = mode === 'playlists' ? 'none' : 'block');
             
             if(mode === 'player' || mode === 'download') {
-                renderVideos();
+                if(allVideos.length === 0) loadFYP();
+                else {
+                    resultsDiv.innerHTML = '';
+                    renderVideos();
+                }
             } else {
-                updateFab(); // Ocultar fab de descarga en playlists
+                updateFab(); 
             }
         }
 
         document.getElementById('search-form').onsubmit = async (e) => {
             e.preventDefault();
-            if(!input.value.trim()) return;
+            if(!input.value.trim()) {
+                loadFYP();
+                return;
+            }
             resultsDiv.innerHTML = '';
             skeleton.classList.remove('hidden');
             skeleton.classList.add('flex');
@@ -351,9 +375,9 @@
             }
         };
 
-        function renderVideos() {
+        function renderVideos(clearDiv = true) {
             if(currentMode === 'playlists') return;
-            resultsDiv.innerHTML = '';
+            if(clearDiv) resultsDiv.innerHTML = '';
             const fragment = document.createDocumentFragment();
 
             allVideos.forEach(video => {
@@ -366,8 +390,7 @@
                 card.className = `video-card flex gap-4 p-3 rounded-2xl select-none relative ${borderClass}`;
                 
                 card.onclick = (e) => {
-                    if(e.target.closest('.no-trigger')) return; // No disparar click principal si toca el boton playlist
-                    
+                    if(e.target.closest('.no-trigger')) return; 
                     if(currentMode === 'download') {
                         if(isDownloading) return;
                         toggleSelection(video.id, video.url);
@@ -386,7 +409,6 @@
                         </div>
                     </div>`;
                 } else {
-                    // Boton Añadir a playlist en cada resultado
                     actionUI = `
                     <div class="flex items-center justify-between mt-2">
                         <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-headphones"></i> Escuchar</div>
@@ -437,12 +459,10 @@
             }
         }
 
-        // --- PLAYLISTS LOGICA ---
         function openAddToPlaylistModal(video) {
             videoToAdd = video;
             const container = document.getElementById('playlist-options');
             container.innerHTML = '';
-            
             const pNames = Object.keys(playlistsData);
             if(pNames.length === 0) {
                 container.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">No tienes playlists creadas</p>`;
@@ -455,7 +475,6 @@
                     container.appendChild(btn);
                 });
             }
-            
             document.getElementById('add-playlist-modal').classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('add-playlist-modal').classList.remove('opacity-0', 'pointer-events-none');
@@ -480,11 +499,7 @@
                 });
                 playlistsData = await res.json();
                 renderPlaylistsTab();
-                
-                // Si venia de añadir un video, actualizar la vista
-                if(videoToAdd) {
-                    openAddToPlaylistModal(videoToAdd);
-                }
+                if(videoToAdd) openAddToPlaylistModal(videoToAdd);
             } catch(e) { alert("Error creando playlist"); }
         }
 
@@ -506,24 +521,19 @@
         function renderPlaylistsTab() {
             const container = document.getElementById('playlists-container');
             container.innerHTML = '';
-            
             const pNames = Object.keys(playlistsData);
             if(pNames.length === 0) {
                 container.innerHTML = `<div class="col-span-2 text-center py-20 text-gray-500">Crea tu primera playlist</div>`;
                 return;
             }
-            
             pNames.forEach(name => {
                 const card = document.createElement('div');
                 card.className = "bg-[#1a1a20] rounded-2xl p-4 border border-gray-800 cursor-pointer hover:border-amber-500 transition shadow-lg relative overflow-hidden group";
-                
-                // Generar una cuadricula de imagenes
                 const songs = playlistsData[name];
                 let bgHTML = '';
                 if (songs.length > 0) {
                     bgHTML = `<div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition blur-[2px] bg-cover bg-center" style="background-image: url('https://i.ytimg.com/vi/${songs[0].id}/mqdefault.jpg')"></div>`;
                 }
-
                 card.onclick = () => openPlaylistDetail(name);
                 card.innerHTML = `
                     ${bgHTML}
@@ -549,7 +559,6 @@
             const detail = document.getElementById('playlist-detail');
             detail.classList.remove('hidden');
             document.getElementById('playlist-detail-title').textContent = name;
-            
             renderPlaylistSongs(name);
         }
 
@@ -586,18 +595,15 @@
         function renderPlaylistSongs(name) {
             const songsContainer = document.getElementById('playlist-detail-songs');
             songsContainer.innerHTML = '';
-            
             const songs = playlistsData[name];
             if(!songs || songs.length === 0) {
                 songsContainer.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">Vacío</p>`;
                 return;
             }
-            
             songs.forEach(video => {
                 const row = document.createElement('div');
                 row.className = "flex items-center gap-3 p-2 bg-[#1a1a20] rounded-xl border border-gray-800 cursor-pointer hover:bg-gray-800 transition";
                 row.onclick = () => startStreaming(video);
-                
                 row.innerHTML = `
                     <img src="https://i.ytimg.com/vi/${video.id}/default.jpg" class="w-12 h-12 rounded-lg object-cover">
                     <div class="flex-1 min-w-0">
@@ -612,22 +618,19 @@
             });
         }
 
-        // --- STREAMING (YOUTUBE PREMIUM) ---
-        let currentQueue = [];
-
         async function startStreaming(video, updateQueue = true) {
-            currentStreamVideo = video; 
+            currentStreamVideo = video;
+            currentStreamId = video.id;
+
+            if (updateQueue) {
+                if (currentMode === 'player') currentQueue = [...allVideos];
+                else if (currentMode === 'playlists' && currentDetailPlaylist) currentQueue = [...playlistsData[currentDetailPlaylist]];
+            }
+
+            fetch('/api/history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(video) }).catch(console.error);
+
             const playerUI = document.getElementById('global-player');
             playerUI.classList.add('active');
-            
-            // Si actualizamos la cola, revisamos en qué pestaña estamos
-            if (updateQueue) {
-                if (currentMode === 'player') {
-                    currentQueue = [...allVideos];
-                } else if (currentMode === 'playlists' && currentDetailPlaylist) {
-                    currentQueue = [...playlistsData[currentDetailPlaylist]];
-                }
-            }
             
             document.getElementById('player-title').textContent = video.title;
             document.getElementById('player-channel').textContent = video.channel;
@@ -639,8 +642,6 @@
                 const res = await fetch(`/api/stream?id=${video.id}&audio_only=${isAudioOnlyMode}`);
                 const data = await res.json();
                 if(data.error) throw new Error();
-                
-                currentStreamId = video.id;
                 
                 if (isAudioOnlyMode) {
                     videoEl.pause();
@@ -659,15 +660,12 @@
                         album: 'JozethDev Premium',
                         artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
                     });
-
-                    // Configurar controles de la pantalla de bloqueo para siguiente canción
                     navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
                     navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
                 }
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
             } catch(e) {
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-xl text-red-500"></i>`;
-                // Si falla, saltar a la siguiente tras 3 segundos
                 setTimeout(playNextSong, 3000);
             }
         }

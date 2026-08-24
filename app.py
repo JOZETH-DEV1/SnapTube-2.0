@@ -52,6 +52,32 @@ class MyLogger:
     def warning(self, msg): pass
     def error(self, msg): pass
 
+HISTORY_FILE = "history.json"
+
+def load_history():
+    if not os.path.exists(HISTORY_FILE): return []
+    try:
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except: return []
+
+def save_history(data):
+    with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data[-50:], f, ensure_ascii=False, indent=4) # Keep last 50
+
+import re
+def is_duplicate(title, seen_normalized):
+    t = title.lower()
+    t = re.sub(r'\(.*?\)|\[.*?\]', '', t)
+    t = re.sub(r'[^a-z0-9]', '', t)
+    if len(t) < 5: return False
+    
+    for seen in seen_normalized:
+        if t == seen or (len(t) > 10 and len(seen) > 10 and (t in seen or seen in t)):
+            return True
+    seen_normalized.add(t)
+    return False
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -59,41 +85,90 @@ def index():
 @app.route("/api/search")
 def search():
     query = request.args.get("q", "")
-    if not query:
-        return jsonify([])
+    if not query: return jsonify([])
 
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'extract_flat': True,
-        'quiet': True,
-        'noplaylist': True,
-    }
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'noplaylist': True}
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(f"ytsearch100:{query}", download=False)
+            result = ydl.extract_info(f"ytsearch50:{query}", download=False)
             if 'entries' in result:
                 videos = []
+                seen_titles = set()
                 downloaded_files = get_downloaded_files()
                 downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
                 
                 for entry in result['entries']:
                     title = entry.get('title', '')
-                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
-                    is_downloaded = safe_title.lower() in downloaded_basenames
+                    if is_duplicate(title, seen_titles): continue
                     
+                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
                     videos.append({
                         'id': entry.get('id'),
                         'title': title,
                         'channel': entry.get('uploader'),
                         'duration': entry.get('duration'),
                         'url': entry.get('url'),
-                        'is_downloaded': is_downloaded
+                        'is_downloaded': safe_title.lower() in downloaded_basenames
                     })
                 return jsonify(videos)
             return jsonify([])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+import random
+@app.route("/api/fyp")
+def fyp():
+    history = load_history()
+    query = "top hits musica"
+    
+    if history:
+        # Extract keywords from recent history
+        recent = history[-5:]
+        words = []
+        for v in recent:
+            title_words = re.sub(r'[^a-zA-Z0-9\s]', '', v.get('title', '')).split()
+            words.extend([w for w in title_words if len(w) > 3])
+        
+        if words:
+            query = " ".join(random.sample(words, min(3, len(words))))
+            query += " musica"
+            
+    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'noplaylist': True}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(f"ytsearch20:{query}", download=False)
+            if 'entries' in result:
+                videos = []
+                seen_titles = set()
+                downloaded_files = get_downloaded_files()
+                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
+                for entry in result['entries']:
+                    title = entry.get('title', '')
+                    if is_duplicate(title, seen_titles): continue
+                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                    videos.append({
+                        'id': entry.get('id'),
+                        'title': title,
+                        'channel': entry.get('uploader'),
+                        'duration': entry.get('duration'),
+                        'url': entry.get('url'),
+                        'is_downloaded': safe_title.lower() in downloaded_basenames
+                    })
+                return jsonify(videos)
+            return jsonify([])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/history", methods=["POST"])
+def add_history():
+    data = request.json
+    history = load_history()
+    # Remove if exists to move it to front
+    history = [h for h in history if h.get("id") != data.get("id")]
+    history.append(data)
+    save_history(history)
+    return jsonify({"status": "ok"})
 
 @app.route("/api/stream")
 def stream():
