@@ -292,6 +292,12 @@
         const skeleton = document.getElementById('skeleton-container');
         const fab = document.getElementById('fab');
 
+        // Fullscreen para video
+        videoEl.ondblclick = () => {
+            if (videoEl.requestFullscreen) videoEl.requestFullscreen();
+            else if (videoEl.webkitRequestFullscreen) videoEl.webkitRequestFullscreen();
+        };
+
         // INICIALIZACION
         async function loadPlaylists() {
             try {
@@ -670,6 +676,10 @@
                     audioEl.pause();
                     videoEl.src = data.url;
                     videoEl.play();
+                    
+                    if (data.is_audio_fallback) {
+                        alert("⚠️ Video original no disponible. Se reproducirá únicamente el audio para esta pista.");
+                    }
                 }
                 
                 if ('mediaSession' in navigator) {

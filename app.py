@@ -123,13 +123,17 @@ def fyp():
     query = "top hits musica"
     
     if history:
-        # Extraer canales de los ultimos 5 videos para recomendar
+        # Extraer títulos limpios de los últimos 5
         recent = history[-5:]
-        channels = [v.get('channel', '') for v in recent if v.get('channel')]
-        if channels:
-            # Elegir un canal al azar del historial y buscar su mix
-            chosen_channel = random.choice(channels)
-            query = f"{chosen_channel} mix musica"
+        titles = []
+        for v in recent:
+            t = v.get('title', '')
+            t = re.sub(r'\(.*?\)|\[.*?\]', '', t).strip()
+            if t: titles.append(t)
+            
+        if titles:
+            chosen_title = random.choice(titles)
+            query = f"{chosen_title} mix"
             
     ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     try:
@@ -204,8 +208,6 @@ def stream():
     if not video_id:
         return jsonify({"error": "No ID provided"}), 400
         
-    # Mejoramos la regla de fallback para que NUNCA falle si no hay formato 18
-    # 22 (720p) -> 18 (360p) -> El mejor MP4 -> Lo que sea que haya
     format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best/bestaudio/best'
     
     ydl_opts = {
@@ -216,12 +218,18 @@ def stream():
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            result = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            # Detectar si el fallback terminó devolviendo solo audio
+            is_fallback = False
+            if not audio_only and result.get('vcodec') == 'none':
+                is_fallback = True
+                
             return jsonify({
-                "url": info['url'],
-                "title": info.get('title'),
-                "thumbnail": info.get('thumbnail'),
-                "channel": info.get('uploader')
+                "url": result['url'],
+                "is_audio_fallback": is_fallback,
+                "title": result.get('title'),
+                "thumbnail": result.get('thumbnail'),
+                "channel": result.get('uploader')
             })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
