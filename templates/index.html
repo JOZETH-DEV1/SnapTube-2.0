@@ -10,80 +10,123 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0f111a;
+            background-color: #0a0a0c;
             color: #ffffff;
             -webkit-tap-highlight-color: transparent;
         }
         .glass-header {
-            background: rgba(15, 17, 26, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         .search-bar {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .search-bar:focus-within {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: #e11d48; /* Rose 600 */
-            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #f59e0b; /* Amber 500 */
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
         }
         .video-card {
-            background: linear-gradient(145deg, rgba(30, 33, 44, 0.6) 0%, rgba(20, 22, 31, 0.8) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, rgba(30, 30, 35, 0.8) 0%, rgba(15, 15, 18, 0.9) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .video-card:active {
+            transform: scale(0.97);
         }
         .video-card.selected {
-            border-color: #e11d48;
-            background: linear-gradient(145deg, rgba(225, 29, 72, 0.1) 0%, rgba(20, 22, 31, 0.9) 100%);
+            border-color: #f59e0b;
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 15, 18, 0.95) 100%);
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
         }
         .fab-gradient {
-            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-            box-shadow: 0 8px 25px -5px rgba(225, 29, 72, 0.5);
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 8px 30px -5px rgba(245, 158, 11, 0.5);
+            color: #000;
         }
+        .fab-gradient:active {
+            transform: scale(0.95);
+        }
+        
+        /* Bouncy Checkbox */
+        .check-circle {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .selected .check-circle {
+            transform: scale(1.1) rotate(360deg);
+        }
+
+        /* Toggles (Select) Animation */
+        select {
+            transition: all 0.3s ease;
+        }
+        select:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2);
+        }
+
         /* Loader de spinner */
         .spinner {
             width: 40px; height: 40px;
-            border: 3px solid rgba(225, 29, 72, 0.2);
+            border: 3px solid rgba(245, 158, 11, 0.2);
             border-radius: 50%;
-            border-top-color: #e11d48;
+            border-top-color: #f59e0b;
             animation: spin 1s ease-in-out infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
         /* Skeletons */
         .skeleton {
-            background: linear-gradient(90deg, #1e212c 25%, #252a36 50%, #1e212c 75%);
+            background: linear-gradient(90deg, #1e1e24 25%, #2a2a32 50%, #1e1e24 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
         }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        /* Download progress */
-        .progress-bar-fill {
-            transition: width 0.3s ease;
+        
+        /* Tiktok Button Pulse */
+        .tiktok-btn {
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 80, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 80, 0); }
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col relative pb-24">
+<body class="antialiased min-h-screen flex flex-col relative pb-28">
 
     <!-- Header & Search (Sticky) -->
     <header class="glass-header sticky top-0 z-40 px-4 pt-5 pb-4">
         <div class="max-w-3xl mx-auto">
-            <div class="flex items-center justify-center gap-3 mb-5">
-                <div class="w-10 h-10 rounded-xl bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/30">
-                    <i class="fa-solid fa-bolt text-white text-lg"></i>
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                        <i class="fa-solid fa-bolt text-black text-lg"></i>
+                    </div>
+                    <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-amber-300 to-amber-500">
+                        JozethDev <span class="text-white">DL</span>
+                    </h1>
                 </div>
-                <h1 class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                    JozethDev <span class="text-rose-500">DL</span>
-                </h1>
+                
+                <!-- Botón TikTok -->
+                <a href="https://tiktok.com/@jozethdev" target="_blank" class="tiktok-btn flex items-center gap-2 bg-[#ff0050] hover:bg-[#e60048] text-white px-4 py-2 rounded-full font-bold text-sm transition-all transform hover:scale-105 active:scale-95">
+                    <i class="fa-brands fa-tiktok"></i>
+                    <span>Sígueme</span>
+                </a>
             </div>
 
-            <form id="search-form" class="relative">
-                <input type="text" id="search-input" placeholder="Pega un enlace o busca música..." 
-                       class="search-bar w-full py-4 pl-14 pr-4 rounded-2xl text-white outline-none transition-all placeholder-gray-500 font-medium">
-                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl p-2 w-10 h-10 flex items-center justify-center transition shadow-lg">
+            <form id="search-form" class="relative group">
+                <input type="text" id="search-input" placeholder="Busca tu música favorita..." 
+                       class="search-bar w-full py-4 pl-14 pr-16 rounded-2xl text-white outline-none placeholder-gray-500 font-medium">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg transition group-focus-within:text-amber-500"></i>
+                <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-amber-500 hover:bg-amber-400 text-black rounded-xl p-2 w-12 h-10 flex items-center justify-center transition-all shadow-lg hover:w-14">
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
@@ -92,95 +135,101 @@
 
     <!-- Main Content -->
     <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
-        <!-- Contenedor de Skeletons (Oculto por defecto) -->
-        <div id="skeleton-container" class="hidden flex-col gap-4">
-            <!-- 3 Skeletons -->
+        <!-- Contenedor de Skeletons -->
+        <div id="skeleton-container" class="hidden flex-col gap-5">
             <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
-                <div class="w-32 h-20 rounded-xl skeleton flex-shrink-0"></div>
-                <div class="flex-1 py-1 space-y-3">
-                    <div class="h-4 bg-gray-800 rounded skeleton w-3/4"></div>
-                    <div class="h-3 bg-gray-800 rounded skeleton w-1/2"></div>
+                <div class="w-36 h-24 rounded-xl skeleton flex-shrink-0"></div>
+                <div class="flex-1 py-2 space-y-4">
+                    <div class="h-4 bg-gray-800 rounded-full skeleton w-3/4"></div>
+                    <div class="h-3 bg-gray-800 rounded-full skeleton w-1/2"></div>
                 </div>
             </div>
             <div class="flex gap-4 p-3 rounded-2xl border border-gray-800/50">
-                <div class="w-32 h-20 rounded-xl skeleton flex-shrink-0"></div>
-                <div class="flex-1 py-1 space-y-3">
-                    <div class="h-4 bg-gray-800 rounded skeleton w-4/5"></div>
-                    <div class="h-3 bg-gray-800 rounded skeleton w-2/5"></div>
+                <div class="w-36 h-24 rounded-xl skeleton flex-shrink-0"></div>
+                <div class="flex-1 py-2 space-y-4">
+                    <div class="h-4 bg-gray-800 rounded-full skeleton w-4/5"></div>
+                    <div class="h-3 bg-gray-800 rounded-full skeleton w-2/5"></div>
                 </div>
             </div>
         </div>
 
         <!-- Contenedor de Resultados -->
-        <div id="results" class="flex flex-col gap-4">
-            <!-- Estado vacío (Inicio) -->
-            <div class="text-center py-20 opacity-50 flex flex-col items-center">
-                <i class="fa-solid fa-music text-5xl mb-4 text-gray-600"></i>
-                <p class="font-medium text-gray-400">Encuentra y descarga música al instante</p>
+        <div id="results" class="flex flex-col gap-5">
+            <!-- Estado vacío -->
+            <div class="text-center py-20 opacity-40 flex flex-col items-center mt-10">
+                <div class="w-24 h-24 bg-gray-800/50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <i class="fa-solid fa-headphones-simple text-4xl text-amber-500/50"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-300 mb-2">¿Qué vamos a escuchar hoy?</h2>
+                <p class="font-medium text-gray-500">Busca artistas, canciones o pega un enlace</p>
             </div>
         </div>
     </main>
 
-    <!-- Modal de Configuración de Descarga -->
-    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/80 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-md transition-all opacity-0 pointer-events-none">
-        <div class="w-full sm:max-w-sm bg-[#151722] sm:rounded-3xl rounded-t-3xl overflow-hidden relative shadow-2xl border-t sm:border border-gray-700/50 p-6 transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="modal-content">
+    <!-- Modal de Configuración -->
+    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-end sm:justify-center items-center backdrop-blur-lg transition-all opacity-0 pointer-events-none">
+        <div class="w-full sm:max-w-sm bg-[#121215] sm:rounded-3xl rounded-t-3xl overflow-hidden relative shadow-2xl border-t sm:border border-gray-700/50 p-6 transform translate-y-full sm:translate-y-0 transition-all duration-400 ease-out" id="modal-content">
             
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Configurar Descarga</h2>
-                <button onclick="closeConfigModal()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-xmark"></i>
+                <h2 class="text-2xl font-extrabold text-white tracking-tight">Opciones</h2>
+                <button onclick="closeConfigModal()" class="w-10 h-10 bg-gray-800/80 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
-            <!-- Advertencia -->
-            <div class="mb-6 bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl flex gap-3 items-start">
-                <i class="fa-solid fa-circle-info text-yellow-500 mt-1"></i>
-                <p class="text-xs text-yellow-200/80 leading-relaxed"><strong>Para uso personal:</strong> JozethDev Downloader no se responsabiliza por la distribución no autorizada de contenido protegido.</p>
-            </div>
-
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold tracking-wider text-gray-500 uppercase mb-2">Formato de Archivo</label>
-                    <select id="dl-type" class="w-full bg-[#1e212c] text-white rounded-xl p-4 border border-gray-700/50 outline-none focus:border-rose-500 transition-colors appearance-none font-medium" onchange="toggleQuality(this.value)">
-                        <option value="audio">🎵 Audio de alta calidad (MP3)</option>
-                        <option value="video">🎥 Video completo (MP4)</option>
-                    </select>
+            <div class="space-y-6">
+                <!-- Toggle animado Formato -->
+                <div class="group">
+                    <label class="block text-[10px] font-black tracking-widest text-amber-500/80 uppercase mb-3 ml-1">¿Audio o Video?</label>
+                    <div class="relative">
+                        <select id="dl-type" class="w-full bg-[#1a1a20] text-white rounded-2xl p-5 border-2 border-gray-800 outline-none focus:border-amber-500 transition-all appearance-none font-bold text-lg cursor-pointer" onchange="toggleQuality(this.value)">
+                            <option value="audio">🎵 Solo MP3 (Audio)</option>
+                            <option value="video">🎥 MP4 (Video Completo)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-amber-500 transition-colors"></i>
+                    </div>
                 </div>
 
-                <div id="quality-container" class="hidden">
-                    <label class="block text-xs font-bold tracking-wider text-gray-500 uppercase mb-2">Calidad Visual</label>
-                    <select id="dl-quality" class="w-full bg-[#1e212c] text-white rounded-xl p-4 border border-gray-700/50 outline-none focus:border-rose-500 transition-colors appearance-none font-medium">
-                        <option value="1080">1080p (Full HD)</option>
-                        <option value="720" selected>720p (HD)</option>
-                        <option value="480">480p (Estándar)</option>
-                    </select>
+                <!-- Toggle animado Calidad -->
+                <div id="quality-container" class="hidden group transition-all duration-300 transform translate-y-4 opacity-0">
+                    <label class="block text-[10px] font-black tracking-widest text-amber-500/80 uppercase mb-3 ml-1">Calidad Visual</label>
+                    <div class="relative">
+                        <select id="dl-quality" class="w-full bg-[#1a1a20] text-white rounded-2xl p-5 border-2 border-gray-800 outline-none focus:border-amber-500 transition-all appearance-none font-bold text-lg cursor-pointer">
+                            <option value="1080">👑 1080p (Full HD)</option>
+                            <option value="720" selected>✨ 720p (HD)</option>
+                            <option value="480">📱 480p (Ahorro Datos)</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none group-focus-within:text-amber-500 transition-colors"></i>
+                    </div>
                 </div>
             </div>
 
-            <button onclick="confirmDownload()" class="w-full fab-gradient text-white font-bold py-4 px-4 rounded-xl mt-8 transition transform active:scale-95 shadow-lg flex items-center justify-center gap-2">
-                <i class="fa-solid fa-cloud-arrow-down"></i> Iniciar Descarga
+            <button onclick="confirmDownload()" class="w-full fab-gradient text-black font-extrabold py-5 px-4 rounded-2xl mt-8 transition transform shadow-[0_0_20px_rgba(245,158,11,0.3)] flex items-center justify-center gap-3 text-lg">
+                <i class="fa-solid fa-bolt text-xl"></i> ¡Descargar Ahora!
             </button>
         </div>
     </div>
 
     <!-- Floating Action Button -->
     <div id="fab" class="hidden fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none px-4">
-        <button onclick="openConfigModal()" class="pointer-events-auto fab-gradient text-white font-bold py-4 px-8 rounded-2xl transform transition hover:-translate-y-1 active:translate-y-0 flex items-center justify-between w-full max-w-sm">
+        <button onclick="openConfigModal()" class="pointer-events-auto fab-gradient text-black font-extrabold py-4 px-6 rounded-2xl transform transition hover:-translate-y-2 active:translate-y-0 flex items-center justify-between w-full max-w-sm">
             <span class="flex items-center gap-3">
-                <i class="fa-solid fa-layer-group text-lg"></i>
-                <span id="fab-text" class="text-sm">0 seleccionados</span>
+                <div class="bg-black/10 w-8 h-8 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-layer-group text-sm"></i>
+                </div>
+                <span id="fab-text" class="text-base">0 seleccionados</span>
             </span>
-            <span class="bg-white/20 px-3 py-1 rounded-lg text-xs tracking-wider uppercase">Siguiente</span>
+            <span class="bg-black text-amber-400 px-4 py-2 rounded-xl text-xs tracking-wider uppercase font-black">Continuar <i class="fa-solid fa-arrow-right ml-1"></i></span>
         </button>
     </div>
 
-    <!-- Modal Reproductor (Minimalista) -->
-    <div id="video-modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex-col justify-center items-center p-4 backdrop-blur-xl">
-        <div class="w-full max-w-3xl relative">
-            <button onclick="closeVideo()" class="absolute -top-12 right-0 text-white/50 hover:text-white text-xl p-2 transition">
+    <!-- Modal Reproductor -->
+    <div id="video-modal" class="fixed inset-0 bg-black/95 hidden z-[200] flex-col justify-center items-center p-4 backdrop-blur-2xl transition-all opacity-0">
+        <div class="w-full max-w-3xl relative transform scale-95 transition-transform duration-300" id="video-modal-content">
+            <button onclick="closeVideo()" class="absolute -top-14 right-0 bg-white/10 hover:bg-white/20 text-white rounded-full px-5 py-2 transition-all font-bold text-sm flex items-center gap-2 backdrop-blur-md">
                 <i class="fa-solid fa-xmark"></i> Cerrar
             </button>
-            <div class="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-[#111] ring-1 ring-white/10" id="video-container"></div>
+            <div class="w-full aspect-video rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10" id="video-container"></div>
         </div>
     </div>
 
@@ -192,6 +241,7 @@
         const fab = document.getElementById('fab');
         const fabText = document.getElementById('fab-text');
         const videoModal = document.getElementById('video-modal');
+        const videoModalContent = document.getElementById('video-modal-content');
         const configModal = document.getElementById('config-modal');
         const modalContent = document.getElementById('modal-content');
 
@@ -199,12 +249,11 @@
         let activeDownloads = new Set();
         let selectedVideos = new Map(); 
 
-        // Infinte Scroll
         let currentRenderLimit = 10;
         let observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && currentRenderLimit < allVideos.length) {
                 currentRenderLimit += 10;
-                renderVideos(false); // Append
+                renderVideos(false);
             }
         }, { rootMargin: "200px" });
 
@@ -220,12 +269,10 @@
             const query = input.value.trim();
             if(!query) return;
 
-            // Reset
             resultsDiv.innerHTML = '';
             selectedVideos.clear();
             updateFab();
             
-            // Show skeletons
             skeletonContainer.classList.remove('hidden');
             skeletonContainer.classList.add('flex');
 
@@ -239,130 +286,134 @@
                 skeletonContainer.classList.remove('flex');
                 
                 if(data.length === 0) {
-                    resultsDiv.innerHTML = `<div class="text-center py-10 text-gray-500">No se encontraron resultados</div>`;
+                    resultsDiv.innerHTML = `<div class="text-center py-20 text-gray-500 font-bold">No encontramos nada con ese nombre 😢</div>`;
                     return;
                 }
                 
                 renderVideos(true);
             } catch(e) {
                 skeletonContainer.classList.add('hidden');
-                resultsDiv.innerHTML = `<div class="text-center py-10 text-rose-500"><i class="fa-solid fa-triangle-exclamation text-3xl mb-3"></i><br>Error de conexión</div>`;
+                resultsDiv.innerHTML = `<div class="text-center py-20 text-rose-500"><i class="fa-solid fa-wifi text-4xl mb-4 opacity-50"></i><br><span class="font-bold">Error de conexión</span></div>`;
             }
         });
 
         function renderVideos(clearFirst = true) {
             if(clearFirst) {
                 resultsDiv.innerHTML = '';
-                // Crear un trigger element invisible para el observer
                 const trigger = document.createElement('div');
                 trigger.id = "scroll-trigger";
-                trigger.className = "h-4 w-full mt-4";
+                trigger.className = "h-1 w-full mt-2";
                 resultsDiv.appendChild(trigger);
             }
 
             const trigger = document.getElementById('scroll-trigger');
             const startIndex = clearFirst ? 0 : currentRenderLimit - 10;
             const chunk = allVideos.slice(startIndex, currentRenderLimit);
-
             const fragment = document.createDocumentFragment();
 
-            chunk.forEach(video => {
+            chunk.forEach((video, index) => {
                 const isSelected = selectedVideos.has(video.id);
                 const isDownloading = activeDownloads.has(video.id);
                 
-                // Badges
                 let statusBadge = '';
                 if (video.is_downloaded) {
-                    statusBadge = `<div class="absolute top-2 left-2 bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-lg border border-emerald-400/30 flex items-center gap-1"><i class="fa-solid fa-check"></i> En Biblioteca</div>`;
+                    statusBadge = `<div class="absolute top-2 left-2 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-extrabold px-2 py-1 rounded-lg shadow-lg border border-emerald-400/50 flex items-center gap-1.5 uppercase tracking-wide"><i class="fa-solid fa-check"></i> En Biblioteca</div>`;
                 }
-                const durationBadge = `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-[10px] font-medium px-2 py-1 rounded-md">${formatDuration(video.duration)}</div>`;
+                const durationBadge = `<div class="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-white/10 shadow-lg">${formatDuration(video.duration)}</div>`;
 
                 const card = document.createElement('div');
                 card.id = `card-${video.id}`;
-                // Apply visual states
-                let borderClass = isSelected ? 'border-rose-500 bg-rose-500/5' : 'border-gray-800/50';
-                let opacityClass = video.is_downloaded ? 'opacity-60 grayscale-[30%]' : '';
                 
-                card.className = `video-card flex gap-3 p-3 rounded-2xl cursor-pointer select-none relative ${borderClass} ${opacityClass}`;
+                let borderClass = isSelected ? 'border-amber-500 bg-amber-500/10 scale-[1.02]' : 'border-gray-800/40';
+                let opacityClass = video.is_downloaded ? 'opacity-50 grayscale-[50%]' : '';
+                
+                card.className = `video-card flex gap-4 p-3 rounded-2xl cursor-pointer select-none relative ${borderClass} ${opacityClass}`;
+                // Animación de cascada al aparecer
+                card.style.animation = `fadeUp 0.4s ease forwards ${index * 0.05}s`;
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
                 
                 if (!isDownloading) {
                     card.onclick = (e) => toggleSelection(e, video.id, video.url);
                 }
 
                 card.innerHTML = `
-                    <div class="relative w-36 h-24 flex-shrink-0 rounded-xl overflow-hidden shadow-inner group">
+                    <div class="relative w-36 h-24 flex-shrink-0 rounded-xl overflow-hidden shadow-lg group border border-white/5">
                         <img src="https://i.ytimg.com/vi/${video.id}/mqdefault.jpg" class="w-full h-full object-cover transform transition duration-500 group-hover:scale-110" loading="lazy">
                         ${statusBadge}
                         ${durationBadge}
-                        <button onclick="playVideo(event, '${video.id}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i class="fa-solid fa-play text-white text-2xl drop-shadow-md"></i>
+                        <button onclick="playVideo(event, '${video.id}')" class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                            <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                                <i class="fa-solid fa-play text-black ml-1"></i>
+                            </div>
                         </button>
                     </div>
                     
-                    <div class="flex flex-col justify-between py-1 pr-2 w-full min-w-0">
+                    <div class="flex flex-col justify-between py-1 w-full min-w-0 pr-1">
                         <div>
-                            <h3 class="font-bold text-sm text-gray-100 leading-snug line-clamp-2 mb-1">${video.title}</h3>
-                            <p class="text-[11px] text-gray-400 font-medium flex items-center gap-1"><i class="fa-regular fa-circle-user"></i> ${video.channel}</p>
+                            <h3 class="font-bold text-[13px] text-gray-100 leading-tight line-clamp-2 mb-1.5">${video.title}</h3>
+                            <p class="text-[11px] text-gray-400 font-semibold flex items-center gap-1.5"><i class="fa-brands fa-youtube text-gray-500"></i> ${video.channel}</p>
                         </div>
                         
                         <div class="flex items-center justify-between mt-2">
-                            <div id="status-${video.id}" class="text-xs font-bold text-rose-400 hidden"></div>
+                            <div id="status-${video.id}" class="text-xs font-bold text-amber-400 hidden"></div>
                             
-                            <div class="w-6 h-6 rounded-full border-2 ${isSelected ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-600 bg-transparent text-transparent'} flex items-center justify-center transition-colors shadow-sm ml-auto" id="check-${video.id}">
-                                <i class="fa-solid fa-check text-[10px]"></i>
+                            <div class="check-circle w-7 h-7 rounded-full border-2 ${isSelected ? 'border-amber-500 bg-amber-500 text-black' : 'border-gray-600 bg-gray-800 text-transparent'} flex items-center justify-center shadow-md ml-auto" id="check-${video.id}">
+                                <i class="fa-solid fa-check text-xs"></i>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Barra de progreso absoluta inferior -->
-                    <div id="progress-container-${video.id}" class="hidden absolute bottom-0 left-0 right-0 h-1 bg-gray-800/50 rounded-b-2xl overflow-hidden">
-                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-rose-500 to-fuchsia-500 progress-bar-fill shadow-[0_0_10px_rgba(225,29,72,0.8)]" style="width: 0%"></div>
+                    <div id="progress-container-${video.id}" class="hidden absolute bottom-0 left-0 right-0 h-1.5 bg-gray-900 rounded-b-2xl overflow-hidden">
+                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.8)]" style="width: 0%"></div>
                     </div>
                 `;
                 fragment.appendChild(card);
             });
 
-            // Insertar antes del trigger de scroll
             resultsDiv.insertBefore(fragment, trigger);
             
-            // Re-observar el trigger
             observer.disconnect();
             if(trigger) observer.observe(trigger);
         }
 
         function toggleSelection(e, id, url) {
-            if(e.target.closest('button')) return; // Evitar clic si tocan el play
+            if(e.target.closest('button')) return; 
             
             const card = document.getElementById(`card-${id}`);
             const check = document.getElementById(`check-${id}`);
             
             if(selectedVideos.has(id)) {
                 selectedVideos.delete(id);
-                card.classList.remove('border-rose-500', 'bg-rose-500/5');
-                card.classList.add('border-gray-800/50');
-                check.className = "w-6 h-6 rounded-full border-2 border-gray-600 bg-transparent text-transparent flex items-center justify-center transition-colors ml-auto shadow-sm";
+                card.classList.remove('selected', 'border-amber-500', 'bg-amber-500/10', 'scale-[1.02]');
+                card.classList.add('border-gray-800/40');
+                check.className = "check-circle w-7 h-7 rounded-full border-2 border-gray-600 bg-gray-800 text-transparent flex items-center justify-center shadow-md ml-auto";
             } else {
                 selectedVideos.set(id, url);
-                card.classList.remove('border-gray-800/50');
-                card.classList.add('border-rose-500', 'bg-rose-500/5');
-                check.className = "w-6 h-6 rounded-full border-2 border-rose-500 bg-rose-500 text-white flex items-center justify-center transition-colors ml-auto shadow-sm";
+                card.classList.remove('border-gray-800/40');
+                card.classList.add('selected', 'border-amber-500', 'bg-amber-500/10');
+                check.className = "check-circle w-7 h-7 rounded-full border-2 border-amber-500 bg-amber-500 text-black flex items-center justify-center shadow-md ml-auto";
             }
+            
+            // Efecto de sonido ligero o vibración haptica si está disponible en móvil
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+
             updateFab();
         }
 
         function updateFab() {
             if(selectedVideos.size > 0) {
                 fab.classList.remove('hidden');
-                fabText.textContent = `${selectedVideos.size} pista${selectedVideos.size > 1 ? 's' : ''} lista${selectedVideos.size > 1 ? 's' : ''}`;
+                fabText.textContent = `${selectedVideos.size} seleccionada${selectedVideos.size > 1 ? 's' : ''}`;
             } else {
                 fab.classList.add('hidden');
             }
         }
 
-        // --- Modals y UI Lógica ---
         function openConfigModal() {
             configModal.classList.remove('hidden');
-            // Timeout para permitir el render y animar la opacidad/transformación
             setTimeout(() => {
                 configModal.classList.remove('opacity-0', 'pointer-events-none');
                 modalContent.classList.remove('translate-y-full');
@@ -375,7 +426,7 @@
             modalContent.classList.add('translate-y-full');
             setTimeout(() => {
                 configModal.classList.add('hidden');
-            }, 300);
+            }, 400);
             updateFab(); 
         }
 
@@ -383,29 +434,37 @@
             const container = document.getElementById('quality-container');
             if (type === 'video') {
                 container.classList.remove('hidden');
-                // Animar entrada
-                container.style.opacity = '0';
-                setTimeout(() => { container.style.transition = 'opacity 0.3s'; container.style.opacity = '1'; }, 10);
+                setTimeout(() => { 
+                    container.classList.remove('translate-y-4', 'opacity-0');
+                }, 10);
             } else {
-                container.classList.add('hidden');
+                container.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => { container.classList.add('hidden'); }, 300);
             }
         }
 
         function playVideo(e, id) {
-            e.stopPropagation(); // Evita seleccionar
+            e.stopPropagation();
             const container = document.getElementById('video-container');
             container.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
             videoModal.classList.remove('hidden');
-            videoModal.classList.add('flex');
+            setTimeout(() => {
+                videoModal.classList.remove('opacity-0');
+                videoModalContent.classList.remove('scale-95');
+                videoModalContent.classList.add('scale-100');
+            }, 10);
         }
 
         function closeVideo() {
-            videoModal.classList.add('hidden');
-            videoModal.classList.remove('flex');
-            document.getElementById('video-container').innerHTML = ''; // Detiene el video
+            videoModal.classList.add('opacity-0');
+            videoModalContent.classList.remove('scale-100');
+            videoModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                videoModal.classList.add('hidden');
+                document.getElementById('video-container').innerHTML = ''; 
+            }, 300);
         }
 
-        // --- Descargas ---
         async function confirmDownload() {
             const dlType = document.getElementById('dl-type').value;
             const quality = document.getElementById('dl-quality').value;
@@ -419,18 +478,18 @@
                 const checkIcon = document.getElementById(`check-${id}`);
                 
                 if (card) {
-                    card.onclick = null; // deshabilitar clic
-                    card.classList.remove('cursor-pointer', 'border-rose-500', 'bg-rose-500/5');
-                    card.classList.add('border-gray-800/50');
+                    card.onclick = null; 
+                    card.classList.remove('selected', 'cursor-pointer', 'border-amber-500', 'bg-amber-500/10', 'scale-[1.02]');
+                    card.classList.add('border-gray-800/40');
                 }
                 if (checkIcon) {
-                    checkIcon.className = "w-6 h-6 flex items-center justify-center ml-auto";
-                    checkIcon.innerHTML = `<i class="fa-solid fa-circle-notch spin text-rose-500 text-lg"></i>`;
+                    checkIcon.className = "w-7 h-7 flex items-center justify-center ml-auto";
+                    checkIcon.innerHTML = `<i class="fa-solid fa-circle-notch spin text-amber-500 text-lg"></i>`;
                 }
                 
                 if (statusDiv) {
                     statusDiv.classList.remove('hidden');
-                    statusDiv.innerHTML = `Preparando...`;
+                    statusDiv.innerHTML = `Iniciando...`;
                 }
                 if (progCont) progCont.classList.remove('hidden');
 
@@ -444,7 +503,7 @@
                 } catch(e) {
                     if (statusDiv) {
                         statusDiv.innerHTML = `Fallo de Red`;
-                        statusDiv.classList.replace('text-rose-400', 'text-red-500');
+                        statusDiv.classList.replace('text-amber-400', 'text-red-500');
                     }
                 }
             }
@@ -468,21 +527,20 @@
                         
                         if(data[id] === 100) {
                             if(statusDiv) {
-                                statusDiv.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-check-double"></i> Terminado</span>`;
+                                statusDiv.innerHTML = `<span class="text-emerald-400 font-black"><i class="fa-solid fa-check-double"></i> ÉXITO</span>`;
                             }
                             if(progBar) progBar.style.width = `100%`;
-                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-check text-emerald-500 text-lg"></i>`;
+                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-check text-emerald-500 text-xl drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]"></i>`;
                             activeDownloads.delete(id);
                             
-                            // Añadir opacidad indicando que ya está descargado
                             const card = document.getElementById(`card-${id}`);
-                            if(card) card.classList.add('opacity-60', 'grayscale-[30%]');
+                            if(card) card.classList.add('opacity-50', 'grayscale-[50%]');
                             
                         } else if(data[id] === -1) {
                             if(statusDiv) {
-                                statusDiv.innerHTML = `<span class="text-red-500"><i class="fa-solid fa-xmark"></i> Error</span>`;
+                                statusDiv.innerHTML = `<span class="text-rose-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ERROR</span>`;
                             }
-                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>`;
+                            if(checkIcon) checkIcon.innerHTML = `<i class="fa-solid fa-xmark text-rose-500 text-xl"></i>`;
                             activeDownloads.delete(id);
                         } else {
                             if(statusDiv) statusDiv.innerHTML = `${data[id].toFixed(1)}%`;
@@ -499,5 +557,11 @@
             }
         }
     </script>
+    <style>
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </body>
 </html>
