@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snaptube Local</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f0f13; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .search-input { background: rgba(255,255,255,0.1); border: none; outline: none; transition: 0.3s; }
+        .search-input:focus { background: rgba(255,255,255,0.15); box-shadow: 0 0 0 2px #ec4899; }
+        
+        .progress-bar { transition: width 0.3s ease; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-24">
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 px-4 py-4 flex justify-between items-center shadow-lg">
+        <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+            <i class="fa-solid fa-music mr-2 text-pink-500"></i>Snaptube<span class="font-light text-white">Local</span>
+        </h1>
+    </header>
+
+    <!-- Search Section -->
+    <main class="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
+        <form id="search-form" class="relative mb-8">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="search-input" placeholder="Buscar canción..." 
+                class="w-full search-input rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-400 font-medium">
+            <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-xl transition">
+                Buscar
+            </button>
+        </form>
+
+        <!-- Loader -->
+        <div id="loader" class="hidden text-center py-10">
+            <i class="fa-solid fa-circle-notch text-4xl text-pink-500 spin"></i>
+            <p class="mt-4 text-gray-400">Buscando...</p>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="space-y-4"></div>
+    </main>
+
+    <!-- Modal de Video -->
+    <div id="video-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-center items-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="w-full max-w-2xl bg-gray-900 rounded-2xl overflow-hidden relative shadow-2xl border border-gray-700">
+            <button onclick="closeVideo()" class="absolute top-3 right-3 text-white bg-black/60 rounded-full w-10 h-10 z-10 flex items-center justify-center hover:bg-pink-600 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="aspect-video w-full" id="video-container"></div>
+        </div>
+        <p class="text-gray-400 mt-4 text-sm"><i class="fa-solid fa-info-circle"></i> Toca fuera del video para cerrar</p>
+    </div>
+
+    <!-- Modal de Opciones de Descarga -->
+    <div id="config-modal" class="fixed inset-0 z-[100] bg-black/90 hidden flex-col justify-center items-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="w-full max-w-sm bg-gray-900 rounded-2xl overflow-hidden relative shadow-2xl border border-gray-700 p-6">
+            <h2 class="text-xl font-bold mb-4 text-white">Opciones de Descarga</h2>
+            
+            <!-- Advertencia -->
+            <div class="mb-5 bg-yellow-500/20 border border-yellow-500/50 p-3 rounded-xl flex gap-3 items-start">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-500 mt-1"></i>
+                <p class="text-xs text-yellow-200"><strong>ADVERTENCIA:</strong> Los videos descargados son solo para uso personal. Queda estrictamente prohibido resubirlos o distribuirlos sin permiso del creador.</p>
+            </div>
+
+            <label class="block text-sm font-medium mb-2 text-gray-300">Formato</label>
+            <select id="dl-type" class="w-full bg-gray-800 text-white rounded-xl p-3 mb-4 border border-gray-700 outline-none focus:border-pink-500 transition" onchange="toggleQuality(this.value)">
+                <option value="audio">🎵 Audio (MP3)</option>
+                <option value="video">🎥 Video (MP4)</option>
+            </select>
+
+            <div id="quality-container" class="hidden">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Calidad de Video</label>
+                <select id="dl-quality" class="w-full bg-gray-800 text-white rounded-xl p-3 mb-6 border border-gray-700 outline-none focus:border-pink-500 transition">
+                    <option value="1080">1080p (Full HD)</option>
+                    <option value="720" selected>720p (HD)</option>
+                    <option value="480">480p (Normal)</option>
+                    <option value="360">360p (Baja)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeConfigModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl transition">Cancelar</button>
+                <button onclick="confirmDownload()" class="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 px-4 rounded-xl transition">Descargar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div id="fab" class="hidden fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
+        <button onclick="openConfigModal()" class="pointer-events-auto bg-gradient-to-r from-pink-600 to-violet-600 text-white font-bold py-4 px-8 rounded-full shadow-[0_10px_40px_rgba(236,72,153,0.4)] transform hover:scale-105 transition flex items-center gap-3">
+            <i class="fa-solid fa-download text-xl"></i>
+            <span id="fab-text">Descargar 0 seleccionadas</span>
+        </button>
+    </div>
+
+    <script>
+        const form = document.getElementById('search-form');
+        const input = document.getElementById('search-input');
+        const resultsDiv = document.getElementById('results');
+        const loader = document.getElementById('loader');
+        const fab = document.getElementById('fab');
+        const fabText = document.getElementById('fab-text');
+        const videoModal = document.getElementById('video-modal');
+        const configModal = document.getElementById('config-modal');
+
+        let activeDownloads = new Set();
+        let selectedVideos = new Map(); 
+
+        function openConfigModal() {
+            configModal.classList.remove('hidden');
+            configModal.classList.add('flex');
+            fab.classList.add('hidden'); // Ocultar boton flotante
+        }
+
+        function closeConfigModal() {
+            configModal.classList.add('hidden');
+            configModal.classList.remove('flex');
+            updateFab(); // Restaurar el fab si hay items
+        }
+
+        function toggleQuality(type) {
+            const container = document.getElementById('quality-container');
+            if (type === 'video') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
+        // Cerrar modal tocando el fondo
+        videoModal.addEventListener('click', (e) => {
+            if (e.target === videoModal) closeVideo();
+        });
+
+        function openVideo(e, id) {
+            e.stopPropagation(); // Evitar seleccionar la canción
+            const container = document.getElementById('video-container');
+            container.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            videoModal.classList.remove('hidden');
+            videoModal.classList.add('flex');
+        }
+
+        function closeVideo() {
+            document.getElementById('video-container').innerHTML = '';
+            videoModal.classList.add('hidden');
+            videoModal.classList.remove('flex');
+        }
+
+        function updateFab() {
+            if (selectedVideos.size > 0) {
+                fab.classList.remove('hidden');
+                fabText.innerText = `Descargar ${selectedVideos.size} seleccionada${selectedVideos.size>1?'s':''}`;
+            } else {
+                fab.classList.add('hidden');
+            }
+        }
+
+        function toggleSelect(id, url) {
+            const card = document.getElementById(`card-${id}`);
+            const check = document.getElementById(`check-${id}`);
+            
+            if (selectedVideos.has(id)) {
+                selectedVideos.delete(id);
+                card.classList.remove('ring-2', 'ring-pink-500');
+                check.classList.replace('text-pink-500', 'text-gray-500');
+                check.classList.replace('fa-circle-check', 'fa-circle');
+            } else {
+                selectedVideos.set(id, url);
+                card.classList.add('ring-2', 'ring-pink-500');
+                check.classList.replace('text-gray-500', 'text-pink-500');
+                check.classList.replace('fa-circle', 'fa-circle-check');
+            }
+            updateFab();
+        }
+
+        let currentResults = [];
+        let renderIndex = 0;
+        const CHUNK_SIZE = 10;
+
+        // Intersection Observer para el scroll infinito
+        const observer = new IntersectionObserver((entries) => {
+            if(entries[0].isIntersecting && currentResults.length > 0) {
+                renderMoreResults();
+            }
+        }, { rootMargin: '200px' });
+
+        function renderMoreResults() {
+            const chunk = currentResults.slice(renderIndex, renderIndex + CHUNK_SIZE);
+            if (chunk.length === 0) return;
+            
+            // Si ya no hay más, dejamos de observar temporalmente
+            if (renderIndex + CHUNK_SIZE >= currentResults.length) {
+                const sentinel = document.getElementById('scroll-sentinel');
+                if (sentinel) observer.unobserve(sentinel);
+            }
+
+            chunk.forEach(video => {
+                const duration = video.duration ? new Date(video.duration * 1000).toISOString().substr(14, 5) : '--:--';
+                const thumbnail = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+                const isSelected = selectedVideos.has(video.id);
+                
+                const card = document.createElement('div');
+                card.id = `card-${video.id}`;
+                card.className = `glass rounded-2xl p-3 flex gap-4 items-center overflow-hidden relative cursor-pointer transition ${isSelected ? 'ring-2 ring-pink-500' : ''}`;
+                card.onclick = () => toggleSelect(video.id, video.url);
+                
+                card.innerHTML = `
+                    <div class="pl-2">
+                        <i id="check-${video.id}" class="${isSelected ? 'fa-solid fa-circle-check text-pink-500' : 'fa-regular fa-circle text-gray-500'} text-2xl transition"></i>
+                    </div>
+                    <div class="relative group" onclick="openVideo(event, '${video.id}')">
+                        <img src="${thumbnail}" class="w-24 h-16 object-cover rounded-lg shadow-md" alt="thumb">
+                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg opacity-90 hover:bg-pink-600/80 transition">
+                            <i class="fa-solid fa-play text-white text-xl drop-shadow-md"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0 pr-2">
+                        <h3 class="font-semibold text-white truncate text-sm mb-1">${video.title}</h3>
+                        <p class="text-xs text-gray-400 truncate">${video.channel} • ${duration}</p>
+                        
+                        <div id="status-${video.id}" class="text-xs font-bold mt-2 text-pink-400 hidden">
+                        </div>
+                    </div>
+                    <div id="progress-container-${video.id}" class="absolute bottom-0 left-0 h-1 w-full bg-white/5 hidden">
+                        <div id="progress-bar-${video.id}" class="h-full bg-gradient-to-r from-pink-500 to-violet-500 progress-bar w-0"></div>
+                    </div>
+                `;
+                resultsDiv.insertBefore(card, document.getElementById('scroll-sentinel'));
+            });
+            renderIndex += CHUNK_SIZE;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = input.value.trim();
+            if(!query) return;
+
+            resultsDiv.innerHTML = '<div id="scroll-sentinel" class="h-10"></div>';
+            loader.classList.remove('hidden');
+            currentResults = [];
+            renderIndex = 0;
+
+            try {
+                // Buscamos 100 resultados de golpe en el backend
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                loader.classList.add('hidden');
+                
+                if(data.length === 0) {
+                    resultsDiv.innerHTML = '<p class="text-center text-gray-500 mt-10">No se encontraron resultados.</p>';
+                    return;
+                }
+
+                currentResults = data;
+                renderMoreResults();
+                
+                // Empezar a observar el final de la lista
+                const sentinel = document.getElementById('scroll-sentinel');
+                if (sentinel) observer.observe(sentinel);
+
+            } catch (err) {
+                loader.classList.add('hidden');
+                resultsDiv.innerHTML = '<p class="text-center text-red-400 mt-10">Error al buscar.</p>';
+            }
+        });
+
+        async function confirmDownload() {
+            const dlType = document.getElementById('dl-type').value;
+            const quality = document.getElementById('dl-quality').value;
+            
+            closeConfigModal(); // Oculta el modal de configuracion
+            
+            for (let [id, url] of selectedVideos.entries()) {
+                const statusDiv = document.getElementById(`status-${id}`);
+                const progCont = document.getElementById(`progress-container-${id}`);
+                const card = document.getElementById(`card-${id}`);
+                const checkIcon = document.getElementById(`check-${id}`);
+                
+                if (card) {
+                    card.onclick = null;
+                    card.classList.remove('cursor-pointer', 'ring-2', 'ring-pink-500');
+                }
+                if (checkIcon) checkIcon.className = "fa-solid fa-spinner spin text-xl text-pink-500";
+                
+                if (statusDiv) {
+                    statusDiv.classList.remove('hidden');
+                    statusDiv.innerHTML = `<i class="fa-solid fa-circle-notch spin"></i> Iniciando...`;
+                }
+                if (progCont) progCont.classList.remove('hidden');
+
+                try {
+                    await fetch('/api/download', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({id, url, type: dlType, quality: quality})
+                    });
+                    activeDownloads.add(id);
+                } catch(e) {
+                    if (statusDiv) {
+                        statusDiv.innerHTML = `<i class="fa-solid fa-xmark"></i> Error`;
+                        statusDiv.classList.replace('text-pink-400', 'text-red-500');
+                    }
+                }
+            }
+            
+            selectedVideos.clear();
+            pollProgress();
+        }
+
+        let pollInterval = null;
+        function pollProgress() {
+            if(pollInterval) return; 
+            
+            pollInterval = setInterval(async () => {
+                if(activeDownloads.size === 0) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/progress');
+                    const progressData = await res.json();
+                    
+                    for(let id of activeDownloads) {
+                        if(progressData[id] !== undefined) {
+                            const pct = progressData[id];
+                            const statusDiv = document.getElementById(`status-${id}`);
+                            const bar = document.getElementById(`progress-bar-${id}`);
+                            const checkIcon = document.getElementById(`check-${id}`);
+                            
+                            if(pct === -1) {
+                                if (statusDiv) {
+                                    statusDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Falló`;
+                                    statusDiv.classList.replace('text-pink-400', 'text-red-500');
+                                }
+                                if (checkIcon) checkIcon.className = "fa-solid fa-xmark text-xl text-red-500";
+                                activeDownloads.delete(id);
+                            } else if(pct === 100) {
+                                if (statusDiv) {
+                                    statusDiv.innerHTML = `<i class="fa-solid fa-check"></i> ¡Guardado en Música!`;
+                                    statusDiv.classList.replace('text-pink-400', 'text-green-400');
+                                }
+                                if (bar) bar.style.width = '100%';
+                                if (checkIcon) checkIcon.className = "fa-solid fa-check-circle text-xl text-green-500";
+                                activeDownloads.delete(id);
+                            } else {
+                                if (statusDiv) statusDiv.innerHTML = `<i class="fa-solid fa-circle-notch spin"></i> Descargando: ${pct}%`;
+                                if (bar) bar.style.width = `${pct}%`;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error polling", e);
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
