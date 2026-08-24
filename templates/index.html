@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>JozethDev Premium</title>
@@ -178,7 +179,7 @@
     <div id="global-player" class="global-player fixed bottom-[70px] left-0 right-0 z-40 flex flex-col items-center px-4 py-3 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
         <div class="max-w-3xl w-full">
             <div id="video-wrapper" class="w-full aspect-video bg-black rounded-xl overflow-hidden hidden mb-3 border border-gray-700">
-                <video id="native-video" class="w-full h-full" controls playsinline></video>
+                <div id="native-video" class="w-full h-full pointer-events-auto"></div>
             </div>
             
             <div class="flex items-center gap-4">
@@ -298,10 +299,11 @@
         const skeleton = document.getElementById('skeleton-container');
         const fab = document.getElementById('fab');
 
-        // Fullscreen para video
-        videoEl.ondblclick = () => {
-            if (videoEl.requestFullscreen) videoEl.requestFullscreen();
-            else if (videoEl.webkitRequestFullscreen) videoEl.webkitRequestFullscreen();
+        // Fullscreen para iframe
+        document.getElementById('native-video').ondblclick = () => {
+            const el = document.getElementById('native-video');
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         };
 
         // INICIALIZACION
@@ -630,6 +632,23 @@
             });
         }
 
+        let ytPlayer = null;
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('native-video', {
+                height: '100%',
+                width: '100%',
+                videoId: '',
+                playerVars: { 'autoplay': 1, 'playsinline': 1 },
+                events: {
+                    'onStateChange': (e) => {
+                        if (e.data === YT.PlayerState.ENDED) playNextSong();
+                        else if (e.data === YT.PlayerState.PLAYING && !isAudioOnlyMode) playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
+                        else if (e.data === YT.PlayerState.PAUSED && !isAudioOnlyMode) playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                    }
+                }
+            });
+        }
+
         async function startStreaming(video, updateQueue = true) {
             currentStreamVideo = video;
             currentStreamId = video.id;
@@ -643,22 +662,19 @@
             const playerUI = document.getElementById('global-player');
             playerUI.classList.add('active');
             
-            document.getElementById('player-title').textContent = "Cargando audio...";
-            document.getElementById('player-channel').textContent = "Extrayendo enlace directo...";
+            document.getElementById('player-title').textContent = "Cargando...";
+            document.getElementById('player-channel').textContent = "Conectando...";
             document.getElementById('player-thumb').src = `https://i.ytimg.com/vi/${video.id}/default.jpg`;
             
             playPauseBtn.innerHTML = `<i class="fa-solid fa-spinner spin text-xl"></i>`;
-            // Deshabilitar botón mientras carga para evitar bugs
             playPauseBtn.style.pointerEvents = 'none';
             
-            // Si es desde búsqueda, construimos una Radio Inteligente en segundo plano
             if (updateQueue && currentMode === 'player') {
-                currentQueue = [video]; // Temporalmente es el único
+                currentQueue = [video]; 
                 fetch(`/api/radio?channel=${encodeURIComponent(video.channel)}`)
                     .then(r => r.json())
                     .then(radioData => {
                         if(radioData && radioData.length > 0) {
-                            // Filtramos el actual para no repetirlo
                             const filtered = radioData.filter(v => v.id !== video.id);
                             currentQueue = [video, ...filtered];
                         }
@@ -666,25 +682,20 @@
             }
 
             try {
-                const res = await fetch(`/api/stream?id=${video.id}&audio_only=${isAudioOnlyMode}`);
-                const data = await res.json();
-                
                 document.getElementById('player-title').textContent = video.title;
                 document.getElementById('player-channel').textContent = video.channel;
-
-                if(data.error) throw new Error();
                 
                 if (isAudioOnlyMode) {
-                    videoEl.pause();
+                    if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
+                    const res = await fetch(`/api/stream?id=${video.id}&audio_only=true`);
+                    const data = await res.json();
+                    if(data.error) throw new Error();
                     audioEl.src = data.url;
                     audioEl.play();
                 } else {
                     audioEl.pause();
-                    videoEl.src = data.url;
-                    videoEl.play();
-                    
-                    if (data.is_audio_fallback) {
-                        alert("⚠️ Video original no disponible. Se reproducirá únicamente el audio para esta pista.");
+                    if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                        ytPlayer.loadVideoById(video.id);
                     }
                 }
                 
@@ -752,28 +763,36 @@
             }
         }
 
-        audioEl.ontimeupdate = () => {
-            if(audioEl.duration) {
-                const pct = (audioEl.currentTime / audioEl.duration) * 100;
-                document.getElementById('audio-progress').style.width = pct + '%';
+        
+        document.getElementById('progress-area').onclick = (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            if (isAudioOnlyMode) {
+                if(audioEl.duration) audioEl.currentTime = pct * audioEl.duration;
+            } else {
+                if(ytPlayer && ytPlayer.getDuration) ytPlayer.seekTo(pct * ytPlayer.getDuration(), true);
             }
         };
-        videoEl.ontimeupdate = () => {
-            if(videoEl.duration) {
-                const pct = (videoEl.currentTime / videoEl.duration) * 100;
+
+        audioEl.ontimeupdate = () => {
+            if(audioEl.duration && isAudioOnlyMode) {
+                const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
             }
         };
 
         audioEl.onended = playNextSong;
-        videoEl.onended = playNextSong;
+
         
-        function seekAudio(e) {
-            if(!audioEl.duration) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pct = (e.clientX - rect.left) / rect.width;
-            audioEl.currentTime = pct * audioEl.duration;
-        }
+        setInterval(() => {
+            if (!isAudioOnlyMode && ytPlayer && ytPlayer.getCurrentTime && ytPlayer.getDuration) {
+                const dur = ytPlayer.getDuration();
+                if (dur > 0) {
+                    const pct = (ytPlayer.getCurrentTime() / dur) * 100;
+                    document.getElementById('audio-progress').style.width = pct + '%';
+                }
+            }
+        }, 1000);
 
         // DESCARGA
         function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); setTimeout(() => { document.getElementById('config-modal').classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.remove('translate-y-full'); }, 10); }
