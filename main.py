@@ -3,7 +3,6 @@ import flet as ft
     import os
     import threading
 
-    # Carpeta de descarga (ajustable en Android)
     DOWNLOAD_DIR = "/storage/emulated/0/Download/Musica"
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
