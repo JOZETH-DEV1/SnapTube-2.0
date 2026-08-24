@@ -1,11 +1,11 @@
- name: Compilar APK de SnaptubeLocal
+name: Compilar APK de SnaptubeLocal
 
-    on:
+on:
       push:
         branches: [ "main" ]
       workflow_dispatch:
 
-    jobs:
+jobs:
       build:
         runs-on: ubuntu-latest
 
