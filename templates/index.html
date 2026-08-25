@@ -702,42 +702,32 @@
             if (isAudioOnlyMode) {
                 if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
                 
-                fetch(`/api/stream?id=${video.id}&audio_only=true`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.error) throw new Error(data.error);
-                        
-                        document.getElementById('player-title').textContent = video.title;
-                        document.getElementById('player-channel').textContent = video.channel;
-                        
-                        
-                        if ('mediaSession' in navigator) {
-                            navigator.mediaSession.metadata = new MediaMetadata({
-                                title: video.title,
-                                artist: video.channel,
-                                album: 'JozethDev Premium',
-                                artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
-                            });
-                            navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
-                            navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
-                            navigator.mediaSession.setActionHandler('play', togglePlayPause);
-                            navigator.mediaSession.setActionHandler('pause', togglePlayPause);
-                        }
-                        audioEl.src = data.url;
-                        const playPromise = audioEl.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(e => {
-                                console.error("Auto-play prevented", e);
-                                document.getElementById('player-title').textContent = "Pausado (Toca Play para continuar)";
-                                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
-                                playPauseBtn.style.pointerEvents = 'auto';
-                            });
-                        }
-                    }).catch(e => {
-                        console.error(e);
-                        document.getElementById('player-title').textContent = "Error, saltando...";
-                        setTimeout(playNextSong, 2000);
+                document.getElementById('player-title').textContent = video.title;
+                document.getElementById('player-channel').textContent = video.channel;
+                
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: video.title,
+                        artist: video.channel,
+                        album: 'JozethDev Premium',
+                        artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
                     });
+                    navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
+                    navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
+                    navigator.mediaSession.setActionHandler('play', togglePlayPause);
+                    navigator.mediaSession.setActionHandler('pause', togglePlayPause);
+                }
+                
+                audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                const playPromise = audioEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.error("Auto-play prevented", e);
+                        document.getElementById('player-title').textContent = "Pausado (Toca Play para continuar)";
+                        playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                        playPauseBtn.style.pointerEvents = 'auto';
+                    });
+                }
             } else {
                 audioEl.pause();
                 document.getElementById('player-title').textContent = video.title;
