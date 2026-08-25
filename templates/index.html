@@ -710,6 +710,19 @@
                         document.getElementById('player-title').textContent = video.title;
                         document.getElementById('player-channel').textContent = video.channel;
                         
+                        
+                        if ('mediaSession' in navigator) {
+                            navigator.mediaSession.metadata = new MediaMetadata({
+                                title: video.title,
+                                artist: video.channel,
+                                album: 'JozethDev Premium',
+                                artwork: [{ src: `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }]
+                            });
+                            navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
+                            navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
+                            navigator.mediaSession.setActionHandler('play', togglePlayPause);
+                            navigator.mediaSession.setActionHandler('pause', togglePlayPause);
+                        }
                         audioEl.src = data.url;
                         const playPromise = audioEl.play();
                         if (playPromise !== undefined) {
