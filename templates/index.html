@@ -700,20 +700,28 @@
                     
                     if (prefetchedNextId === video.id && prefetchedNextUrl) {
                         audioEl.src = prefetchedNextUrl;
+                        audioEl.play().catch(e => console.error("Auto-play prevented", e));
+                    } else if (queueIndex === -1) {
+                        // Click manual: usamos fetch normal para mayor compatibilidad
+                        fetch(`/api/stream?id=${video.id}&audio_only=true`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if(!data.error) {
+                                    audioEl.src = data.url;
+                                    audioEl.play().catch(e => {
+                                        document.getElementById('player-title').textContent = "Error al reproducir";
+                                        playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                                    });
+                                }
+                            });
                     } else {
+                        // Auto-play fallback si falló el prefetch
                         audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                        audioEl.play().catch(e => console.error("Auto-play prevented", e));
                     }
                     
-                    // Reset prefetch states
                     prefetchedNextId = null;
                     prefetchedNextUrl = null;
-                    
-                    const playPromise = audioEl.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => {
-                            console.log("Auto-play prevented", error);
-                        });
-                    }
                 } else {
                     audioEl.pause();
                     if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
