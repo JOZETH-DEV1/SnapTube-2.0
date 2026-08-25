@@ -132,12 +132,16 @@ def fyp():
     queries = ["top hits musica actual", "canciones mas escuchadas", "musica viral"]
     
     if history:
-        recent = history[-10:]
-        channels = list(set([v.get('channel', '') for v in recent if v.get('channel')]))
-        if channels:
-            random.shuffle(channels)
-            chosen_channels = channels[:2] # Pick up to 2 random artists
-            queries = [f"{c} grandes exitos" for c in chosen_channels]
+        recent = history[-5:]
+        titles = []
+        for v in recent:
+            t = v.get('title', '')
+            t = re.sub(r'\(.*?\)|\[.*?\]', '', t).strip()
+            if t: titles.append(t)
+            
+        if titles:
+            random.shuffle(titles)
+            queries = [f"{t} mix musica" for t in titles[:2]]
             
     ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
     

@@ -644,12 +644,19 @@
                 height: '100%',
                 width: '100%',
                 videoId: '',
-                playerVars: { 'autoplay': 1, 'playsinline': 1 },
+                playerVars: { 'autoplay': 1, 'playsinline': 1, 'fs': 1, 'rel': 0 },
                 events: {
                     'onStateChange': (e) => {
                         if (e.data === YT.PlayerState.ENDED) playNextSong();
                         else if (e.data === YT.PlayerState.PLAYING && !isAudioOnlyMode) playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
                         else if (e.data === YT.PlayerState.PAUSED && !isAudioOnlyMode) playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                    },
+                    'onError': (e) => {
+                        console.error('YT Iframe Error:', e.data);
+                        document.getElementById('player-title').textContent = "⚠️ Video bloqueado. Cambiando a audio...";
+                        if (!isAudioOnlyMode) {
+                            toggleVideoMode(); // Switch back to audio mode where it works!
+                        }
                     }
                 }
             });
@@ -760,19 +767,30 @@
             }
         }
 
+        function toggleFullscreen() {
+            const iframe = document.getElementById('native-video');
+            if (!iframe) return;
+            if (iframe.requestFullscreen) iframe.requestFullscreen();
+            else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+            else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+        }
+
         function toggleVideoMode() {
             isAudioOnlyMode = !isAudioOnlyMode;
             const wrap = document.getElementById('video-wrapper');
             const btn = document.getElementById('video-toggle-btn');
             
+            const fsBtn = document.getElementById('fullscreen-btn');
             if(!isAudioOnlyMode) {
                 wrap.classList.remove('hidden');
                 btn.classList.add('bg-amber-500', 'text-black');
                 btn.classList.remove('bg-gray-800', 'text-gray-400');
+                fsBtn.classList.remove('hidden');
             } else {
                 wrap.classList.add('hidden');
                 btn.classList.remove('bg-amber-500', 'text-black');
                 btn.classList.add('bg-gray-800', 'text-gray-400');
+                fsBtn.classList.add('hidden');
             }
             if(currentStreamId && currentStreamVideo) {
                 startStreaming(currentStreamVideo, false);
