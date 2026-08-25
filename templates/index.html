@@ -290,6 +290,11 @@
         let currentStreamVideo = null;
         let currentStreamId = null;
         let currentQueueIndex = -1;
+
+        let prefetchedNextId = null;
+        let prefetchedNextUrl = null;
+        let isPrefetching = false;
+
         let isAudioOnlyMode = true;
         const audioEl = document.getElementById('native-audio');
         const videoEl = document.getElementById('native-video');
@@ -692,8 +697,17 @@
                 
                 if (isAudioOnlyMode) {
                     if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
-                    // Use synchronous direct API to bypass Android autoplay restrictions in background
-                    audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                    
+                    if (prefetchedNextId === video.id && prefetchedNextUrl) {
+                        audioEl.src = prefetchedNextUrl;
+                    } else {
+                        audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                    }
+                    
+                    // Reset prefetch states
+                    prefetchedNextId = null;
+                    prefetchedNextUrl = null;
+                    
                     const playPromise = audioEl.play();
                     if (playPromise !== undefined) {
                         playPromise.catch(error => {
@@ -791,6 +805,22 @@
             if(audioEl.duration && isAudioOnlyMode) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
+                
+                // Prefetch next song when 20 seconds remain
+                const timeLeft = audioEl.duration - audioEl.currentTime;
+                if (timeLeft < 25 && currentQueue && currentQueue.length > currentQueueIndex + 1) {
+                    const nextVideo = currentQueue[currentQueueIndex + 1];
+                    if (nextVideo && nextVideo.id !== prefetchedNextId && !isPrefetching) {
+                        isPrefetching = true;
+                        prefetchedNextId = nextVideo.id;
+                        fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if(!data.error) prefetchedNextUrl = data.url;
+                                isPrefetching = false;
+                            }).catch(() => { isPrefetching = false; });
+                    }
+                }
             }
         };
 
