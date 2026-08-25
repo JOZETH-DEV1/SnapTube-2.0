@@ -196,7 +196,7 @@
                     <i class="fa-solid fa-video"></i>
                 </button>
                 
-                <audio id="native-audio"></audio>
+                <audio id="native-audio" autoplay></audio>
                 
                 <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90">
                     <i class="fa-solid fa-play text-xl ml-1"></i>
@@ -289,6 +289,7 @@
         
         let currentStreamVideo = null;
         let currentStreamId = null;
+        let currentQueueIndex = -1;
         let isAudioOnlyMode = true;
         const audioEl = document.getElementById('native-audio');
         const videoEl = document.getElementById('native-video');
@@ -648,12 +649,17 @@
             });
         }
 
-        async function startStreaming(video, updateQueue = true) {
+        function startStreaming(video, updateQueue = true, queueIndex = -1) {
             currentStreamVideo = video;
             currentStreamId = video.id;
-
+            
             if (updateQueue && currentMode === 'playlists' && currentDetailPlaylist) {
                 currentQueue = [...playlistsData[currentDetailPlaylist]];
+                currentQueueIndex = currentQueue.findIndex(v => v.id === video.id);
+            } else if (!updateQueue) {
+                currentQueueIndex = queueIndex;
+            } else {
+                currentQueueIndex = 0; // First song of new radio
             }
 
             fetch('/api/history', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(video) }).catch(console.error);
@@ -670,7 +676,7 @@
             
             if (updateQueue && currentMode === 'player') {
                 currentQueue = [video]; 
-                fetch(`/api/radio?channel=${encodeURIComponent(video.channel)}`)
+                fetch(`/api/radio?channel=${encodeURIComponent(video.channel || video.title)}`)
                     .then(r => r.json())
                     .then(radioData => {
                         if(radioData && radioData.length > 0) {
@@ -711,8 +717,6 @@
                     navigator.mediaSession.setActionHandler('nexttrack', playNextSong);
                     navigator.mediaSession.setActionHandler('previoustrack', playPreviousSong);
                 }
-                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
-                playPauseBtn.style.pointerEvents = 'auto';
             } catch(e) {
                 document.getElementById('player-title').textContent = "Error al cargar";
                 document.getElementById('player-channel').textContent = "Saltando a la siguiente...";
@@ -724,9 +728,9 @@
 
         function playNextSong() {
             if (!currentQueue || currentQueue.length === 0) return;
-            const currentIndex = currentQueue.findIndex(v => v.id === currentStreamId);
-            if (currentIndex >= 0 && currentIndex < currentQueue.length - 1) {
-                startStreaming(currentQueue[currentIndex + 1], false);
+            let nextIndex = currentQueueIndex + 1;
+            if (nextIndex > 0 && nextIndex < currentQueue.length) {
+                startStreaming(currentQueue[nextIndex], false, nextIndex);
             } else {
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
             }
@@ -734,9 +738,9 @@
         
         function playPreviousSong() {
             if (!currentQueue || currentQueue.length === 0) return;
-            const currentIndex = currentQueue.findIndex(v => v.id === currentStreamId);
-            if (currentIndex > 0) {
-                startStreaming(currentQueue[currentIndex - 1], false);
+            let prevIndex = currentQueueIndex - 1;
+            if (prevIndex >= 0) {
+                startStreaming(currentQueue[prevIndex], false, prevIndex);
             }
         }
 
@@ -791,6 +795,10 @@
         };
 
         audioEl.onended = playNextSong;
+        audioEl.onplaying = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; playPauseBtn.style.pointerEvents = 'auto'; } };
+        audioEl.onpause = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; playPauseBtn.style.pointerEvents = 'auto'; } };
+        audioEl.onerror = () => { if(isAudioOnlyMode) playNextSong(); };
+
 
         
         setInterval(() => {
