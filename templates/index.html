@@ -687,6 +687,19 @@
                         if(radioData && radioData.length > 0) {
                             const filtered = radioData.filter(v => v.id !== video.id);
                             currentQueue = [video, ...filtered];
+                            
+                            // Trigger prefetch as soon as queue is built
+                            if (currentQueue.length > 1 && !prefetchedNextUrl && !isPrefetching) {
+                                isPrefetching = true;
+                                const nextV = currentQueue[1];
+                                prefetchedNextId = nextV.id;
+                                fetch(`/api/stream?id=${nextV.id}&audio_only=true`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if(!data.error) prefetchedNextUrl = data.url;
+                                        isPrefetching = false;
+                                    }).catch(() => { isPrefetching = false; });
+                            }
                         }
                     }).catch(console.error);
             }
@@ -708,12 +721,31 @@
                     if (playPromise !== undefined) {
                         playPromise.catch(e => {
                             console.error("Auto-play prevented", e);
+                            document.getElementById('player-title').textContent = "Pausado (Toca Play para continuar)";
                             playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                            playPauseBtn.style.pointerEvents = 'auto';
                         });
                     }
                     
                     prefetchedNextId = null;
                     prefetchedNextUrl = null;
+                    
+                    // Disparar prefetch inmediato para la siguiente canción (Android congela ontimeupdate en segundo plano)
+                    setTimeout(() => {
+                        if (currentQueue && currentQueue.length > currentQueueIndex + 1) {
+                            const nextVideo = currentQueue[currentQueueIndex + 1];
+                            if (nextVideo && !isPrefetching) {
+                                isPrefetching = true;
+                                prefetchedNextId = nextVideo.id;
+                                fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if(!data.error) prefetchedNextUrl = data.url;
+                                        isPrefetching = false;
+                                    }).catch(() => { isPrefetching = false; });
+                            }
+                        }
+                    }, 5000); // Esperar 5 segundos para no saturar la red al iniciar
                 } else {
                     audioEl.pause();
                     if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
@@ -805,22 +837,6 @@
             if(audioEl.duration && isAudioOnlyMode) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
-                
-                // Prefetch next song when 20 seconds remain
-                const timeLeft = audioEl.duration - audioEl.currentTime;
-                if (timeLeft < 25 && currentQueue && currentQueue.length > currentQueueIndex + 1) {
-                    const nextVideo = currentQueue[currentQueueIndex + 1];
-                    if (nextVideo && nextVideo.id !== prefetchedNextId && !isPrefetching) {
-                        isPrefetching = true;
-                        prefetchedNextId = nextVideo.id;
-                        fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
-                            .then(r => r.json())
-                            .then(data => {
-                                if(!data.error) prefetchedNextUrl = data.url;
-                                isPrefetching = false;
-                            }).catch(() => { isPrefetching = false; });
-                    }
-                }
             }
         };
 
