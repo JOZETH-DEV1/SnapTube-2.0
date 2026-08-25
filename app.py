@@ -214,6 +214,30 @@ def add_history():
     save_history(history)
     return jsonify({"status": "ok"})
 
+
+from flask import redirect
+
+@app.route("/api/stream_direct")
+def stream_direct():
+    video_id = request.args.get("id")
+    audio_only = request.args.get("audio_only", "true") == "true"
+    if not video_id:
+        return "No ID", 400
+        
+    format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best/bestaudio/best'
+    ydl_opts = {
+        'format': format_selector,
+        'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'],
+        'nocheckcertificate': True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            result = ydl.extract_info(video_id, download=False)
+            import flask
+            return flask.redirect(result['url'])
+    except Exception as e:
+        return str(e), 500
+
 @app.route("/api/stream")
 def stream():
     video_id = request.args.get("id")

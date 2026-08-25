@@ -686,11 +686,14 @@
                 
                 if (isAudioOnlyMode) {
                     if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
-                    const res = await fetch(`/api/stream?id=${video.id}&audio_only=true`);
-                    const data = await res.json();
-                    if(data.error) throw new Error();
-                    audioEl.src = data.url;
-                    audioEl.play();
+                    // Use synchronous direct API to bypass Android autoplay restrictions in background
+                    audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                    const playPromise = audioEl.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Auto-play prevented", error);
+                        });
+                    }
                 } else {
                     audioEl.pause();
                     if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
