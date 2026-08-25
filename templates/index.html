@@ -196,7 +196,8 @@
                     <i class="fa-solid fa-video"></i>
                 </button>
                 
-                <audio id="native-audio" autoplay></audio>
+                <audio id="native-audio-1" autoplay></audio>
+                <audio id="native-audio-2" autoplay></audio>
                 
                 <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90">
                     <i class="fa-solid fa-play text-xl ml-1"></i>
@@ -296,7 +297,11 @@
         let isPrefetching = false;
 
         let isAudioOnlyMode = true;
-        const audioEl = document.getElementById('native-audio');
+        const audio1 = document.getElementById('native-audio-1');
+        const audio2 = document.getElementById('native-audio-2');
+        let audioEl = audio1; // Active audio element
+        let nextAudioEl = audio2; // Background audio element
+
         const videoEl = document.getElementById('native-video');
         const playPauseBtn = document.getElementById('play-pause-btn');
         const input = document.getElementById('search-input');
@@ -696,7 +701,11 @@
                                 fetch(`/api/stream?id=${nextV.id}&audio_only=true`)
                                     .then(r => r.json())
                                     .then(data => {
-                                        if(!data.error) prefetchedNextUrl = data.url;
+                                        if(!data.error) {
+                                            prefetchedNextUrl = data.url;
+                                            nextAudioEl.src = data.url;
+                                            nextAudioEl.load();
+                                        }
                                         isPrefetching = false;
                                     }).catch(() => { isPrefetching = false; });
                             }
@@ -711,8 +720,26 @@
                 if (isAudioOnlyMode) {
                     if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
                     
+                    // Swap active audio element
+                    const temp = audioEl;
+                    audioEl = nextAudioEl;
+                    nextAudioEl = temp;
+                    
+                    // Stop the old audio element completely
+                    nextAudioEl.pause();
+                    nextAudioEl.removeAttribute('src');
+                    nextAudioEl.load();
+
+                    if (queueIndex === -1) {
+                        // Manual click unlocks both audio elements in mobile browsers
+                        audioEl.play().catch(()=>{});
+                        nextAudioEl.play().catch(()=>{});
+                    }
+
                     if (prefetchedNextId === video.id && prefetchedNextUrl) {
-                        audioEl.src = prefetchedNextUrl;
+                        if (audioEl.src !== prefetchedNextUrl) {
+                            audioEl.src = prefetchedNextUrl;
+                        }
                     } else {
                         audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
                     }
@@ -730,7 +757,7 @@
                     prefetchedNextId = null;
                     prefetchedNextUrl = null;
                     
-                    // Disparar prefetch inmediato para la siguiente canción (Android congela ontimeupdate en segundo plano)
+                    // Disparar prefetch inmediato para la siguiente canción
                     setTimeout(() => {
                         if (currentQueue && currentQueue.length > currentQueueIndex + 1) {
                             const nextVideo = currentQueue[currentQueueIndex + 1];
@@ -740,12 +767,17 @@
                                 fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
                                     .then(r => r.json())
                                     .then(data => {
-                                        if(!data.error) prefetchedNextUrl = data.url;
+                                        if(!data.error) {
+                                            prefetchedNextUrl = data.url;
+                                            // Preload the next audio element!
+                                            nextAudioEl.src = data.url;
+                                            nextAudioEl.load(); // Forces browser to connect and buffer!
+                                        }
                                         isPrefetching = false;
                                     }).catch(() => { isPrefetching = false; });
                             }
                         }
-                    }, 5000); // Esperar 5 segundos para no saturar la red al iniciar
+                    }, 5000);
                 } else {
                     audioEl.pause();
                     if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
@@ -833,17 +865,34 @@
             }
         };
 
-        audioEl.ontimeupdate = () => {
-            if(audioEl.duration && isAudioOnlyMode) {
-                const pct = (audioEl.currentTime / audioEl.duration) * 100;
-                document.getElementById('audio-progress').style.width = pct + '%';
-            }
-        };
 
-        audioEl.onended = playNextSong;
-        audioEl.onplaying = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; playPauseBtn.style.pointerEvents = 'auto'; } };
-        audioEl.onpause = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; playPauseBtn.style.pointerEvents = 'auto'; } };
-        audioEl.onerror = () => { if(isAudioOnlyMode) playNextSong(); };
+        function bindAudioEvents(audio) {
+            audio.onended = playNextSong;
+            audio.onplaying = () => { 
+                if(isAudioOnlyMode && audio === audioEl) { 
+                    playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; 
+                    playPauseBtn.style.pointerEvents = 'auto'; 
+                    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+                } 
+            };
+            audio.onpause = () => { 
+                if(isAudioOnlyMode && audio === audioEl) { 
+                    playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; 
+                    playPauseBtn.style.pointerEvents = 'auto'; 
+                    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+                } 
+            };
+            audio.onerror = () => { if(isAudioOnlyMode && audio === audioEl) playNextSong(); };
+            audio.ontimeupdate = () => {
+                if(audio.duration && isAudioOnlyMode && audio === audioEl) {
+                    const pct = (audio.currentTime / audio.duration) * 100;
+                    document.getElementById('audio-progress').style.width = pct + '%';
+                }
+            };
+        }
+        bindAudioEvents(audio1);
+        bindAudioEvents(audio2);
+
 
 
         
