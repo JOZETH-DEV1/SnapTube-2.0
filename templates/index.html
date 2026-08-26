@@ -296,6 +296,8 @@
         let isPrefetching = false;
 
         let isAudioOnlyMode = true;
+        let preloadedNextUrl = null;
+        let preloadedNextId = null;
         const audioEl = document.getElementById('native-audio');
 
         const videoEl = document.getElementById('native-video');
@@ -718,7 +720,13 @@
                     navigator.mediaSession.setActionHandler('pause', togglePlayPause);
                 }
                 
-                audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                if (preloadedNextId === video.id && preloadedNextUrl) {
+                    audioEl.src = preloadedNextUrl;
+                    preloadedNextId = null;
+                    preloadedNextUrl = null;
+                } else {
+                    audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
+                }
                 const playPromise = audioEl.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(e => {
@@ -820,6 +828,24 @@
             if(audioEl.duration && isAudioOnlyMode) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
+                
+                // PREFETCH MAGIC: Load next song URL 15 seconds before current song ends
+                if (audioEl.duration - audioEl.currentTime < 15) {
+                    if (currentQueue && currentQueue.length > 0) {
+                        let nextIndex = currentQueueIndex + 1;
+                        if (nextIndex > 0 && nextIndex < currentQueue.length) {
+                            let nextVideo = currentQueue[nextIndex];
+                            if (preloadedNextId !== nextVideo.id) {
+                                preloadedNextId = nextVideo.id;
+                                fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if(!data.error) preloadedNextUrl = data.url;
+                                    }).catch(console.error);
+                            }
+                        }
+                    }
+                }
             }
         };
 
