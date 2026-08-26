@@ -128,10 +128,34 @@ def search():
 import random
 @app.route("/api/fyp")
 def fyp():
+    try:
+        import os
+        from ytmusicapi import YTMusic
+        if os.path.exists('oauth.json'):
+            ytmusic = YTMusic('oauth.json')
+            home = ytmusic.get_home()
+            all_videos = []
+            seen = set()
+            for section in home:
+                if 'contents' in section:
+                    for item in section['contents']:
+                        vid = item.get('videoId')
+                        if vid and vid not in seen:
+                            seen.add(vid)
+                            all_videos.append({
+                                'id': vid,
+                                'title': item.get('title', ''),
+                                'channel': ', '.join([a.get('name', '') for a in item.get('artists', [])]) if item.get('artists') else 'Unknown',
+                                'is_downloaded': False
+                            })
+            if all_videos:
+                return jsonify(all_videos)
+    except Exception as e:
+        print("YTMusic FYP error:", e)
+
+    # Fallback
     history = load_history()
-    
     queries = ["top hits musica actual", "canciones mas escuchadas", "musica viral"]
-    
     if history:
         recent = history[-5:]
         titles = []
@@ -139,8 +163,8 @@ def fyp():
             t = v.get('title', '')
             t = re.sub(r'\(.*?\)|\[.*?\]', '', t).strip()
             if t: titles.append(t)
-            
         if titles:
+            import random
             random.shuffle(titles)
             queries = [f"{t} mix musica" for t in titles[:2]]
             
@@ -149,29 +173,24 @@ def fyp():
     try:
         all_videos = []
         seen_titles = set()
-        downloaded_files = get_downloaded_files()
-        downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
-        
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             for q in queries:
-                result = ydl.extract_info(f"ytsearch15:{q}", download=False)
-                if 'entries' in result:
-                    for entry in result['entries']:
-                        title = entry.get('title', '')
-                        if is_duplicate(title, seen_titles): continue
-                        safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
+                res = ydl.extract_info(f"ytsearch15:{q}", download=False)
+                if 'entries' in res:
+                    for entry in res['entries']:
+                        if not entry: continue
+                        t = entry.get('title', '')
+                        if t in seen_titles: continue
+                        seen_titles.add(t)
                         all_videos.append({
                             'id': entry.get('id'),
-                            'title': title,
-                            'channel': entry.get('uploader'),
-                            'duration': entry.get('duration'),
-                            'url': entry.get('url'),
-                            'is_downloaded': safe_title.lower() in downloaded_basenames
+                            'title': t,
+                            'channel': entry.get('uploader', 'Unknown'),
+                            'is_downloaded': False
                         })
-        random.shuffle(all_videos)
-        return jsonify(all_videos[:30]) # Return 30 mixed results
+        return jsonify(all_videos)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/radio")
 def radio():
