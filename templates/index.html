@@ -720,22 +720,25 @@
                     navigator.mediaSession.setActionHandler('pause', togglePlayPause);
                 }
                 
-                if (preloadedNextId === video.id && preloadedNextUrl) {
-                    audioEl.src = preloadedNextUrl;
-                    preloadedNextId = null;
-                    preloadedNextUrl = null;
-                } else {
-                    audioEl.src = `/api/stream_direct?id=${video.id}&audio_only=true`;
-                }
-                const playPromise = audioEl.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(e => {
-                        console.error("Auto-play prevented", e);
-                        document.getElementById('player-title').textContent = "Pausado (Toca Play para continuar)";
-                        playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
-                        playPauseBtn.style.pointerEvents = 'auto';
-                    });
-                }
+                
+                fetch(`/api/stream?id=${video.id}&audio_only=true`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if(data.error) {
+                            console.error(data.error);
+                            playNextSong();
+                            return;
+                        }
+                        audioEl.src = data.url;
+                        const playPromise = audioEl.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                console.error("Auto-play prevented", e);
+                                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                            });
+                        }
+                    }).catch(console.error);
+                
             } else {
                 audioEl.pause();
                 document.getElementById('player-title').textContent = video.title;
@@ -820,7 +823,8 @@
         };
 
 
-                audioEl.onended = playNextSong;
+
+        audioEl.onended = playNextSong;
         audioEl.onplaying = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; playPauseBtn.style.pointerEvents = 'auto'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; } };
         audioEl.onpause = () => { if(isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; playPauseBtn.style.pointerEvents = 'auto'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; } };
         audioEl.onerror = () => { if(isAudioOnlyMode) playNextSong(); };
@@ -828,26 +832,9 @@
             if(audioEl.duration && isAudioOnlyMode) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
-                
-                // PREFETCH MAGIC: Load next song URL 15 seconds before current song ends
-                if (audioEl.duration - audioEl.currentTime < 15) {
-                    if (currentQueue && currentQueue.length > 0) {
-                        let nextIndex = currentQueueIndex + 1;
-                        if (nextIndex > 0 && nextIndex < currentQueue.length) {
-                            let nextVideo = currentQueue[nextIndex];
-                            if (preloadedNextId !== nextVideo.id) {
-                                preloadedNextId = nextVideo.id;
-                                fetch(`/api/stream?id=${nextVideo.id}&audio_only=true`)
-                                    .then(r => r.json())
-                                    .then(data => {
-                                        if(!data.error) preloadedNextUrl = data.url;
-                                    }).catch(console.error);
-                            }
-                        }
-                    }
-                }
             }
         };
+
 
 
 
