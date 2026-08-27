@@ -56,6 +56,16 @@ public class WebAudioService extends Service {
         super.onCreate();
         createNotificationChannel();
         
+        // Fix ANR: Must call startForeground immediately
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        androidx.core.app.NotificationCompat.Builder builder = new androidx.core.app.NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("SnapTube")
+            .setContentText("Listo para reproducir")
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setContentIntent(pendingIntent);
+        startForeground(1, builder.build());
+        
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioAttributes(
             new AudioAttributes.Builder()
