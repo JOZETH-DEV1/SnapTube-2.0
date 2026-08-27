@@ -34,6 +34,24 @@ public class WebAudioService extends Service {
     public IBinder onBind(Intent intent) { return binder; }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && intent.getAction() != null) {
+            String action = intent.getAction();
+            if (action.equals("ACTION_NEXT") && MainActivity.instance != null) {
+                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playNextSong();", null));
+            } else if (action.equals("ACTION_PREV") && MainActivity.instance != null) {
+                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playPreviousSong();", null));
+            } else if (action.equals("ACTION_PAUSE")) {
+                pause();
+            } else if (action.equals("ACTION_PLAY")) {
+                resume();
+            }
+        }
+        androidx.media.session.MediaButtonReceiver.handleIntent(mediaSession, intent);
+        return START_STICKY;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
@@ -120,7 +138,14 @@ public class WebAudioService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
 
-        androidx.media.session.MediaButtonReceiver.handleIntent(mediaSession, new Intent());
+        Intent prevIntent = new Intent(this, WebAudioService.class).setAction("ACTION_PREV");
+        PendingIntent pPrev = PendingIntent.getService(this, 1, prevIntent, PendingIntent.FLAG_IMMUTABLE);
+        
+        Intent nextIntent = new Intent(this, WebAudioService.class).setAction("ACTION_NEXT");
+        PendingIntent pNext = PendingIntent.getService(this, 2, nextIntent, PendingIntent.FLAG_IMMUTABLE);
+        
+        Intent playPauseIntent = new Intent(this, WebAudioService.class).setAction(state == PlaybackStateCompat.STATE_PLAYING ? "ACTION_PAUSE" : "ACTION_PLAY");
+        PendingIntent pPlayPause = PendingIntent.getService(this, 3, playPauseIntent, PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(currentTitle)
@@ -128,13 +153,13 @@ public class WebAudioService extends Service {
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .addAction(android.R.drawable.ic_media_previous, "Previous", androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS))
+            .addAction(android.R.drawable.ic_media_previous, "Previous", pPrev)
             .addAction(
                 state == PlaybackStateCompat.STATE_PLAYING ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play,
                 "Play/Pause",
-                androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, state == PlaybackStateCompat.STATE_PLAYING ? PlaybackStateCompat.ACTION_PAUSE : PlaybackStateCompat.ACTION_PLAY)
+                pPlayPause
             )
-            .addAction(android.R.drawable.ic_media_next, "Next", androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT))
+            .addAction(android.R.drawable.ic_media_next, "Next", pNext)
             .setStyle(new MediaStyle()
                 .setShowActionsInCompactView(0, 1, 2)
                 .setMediaSession(mediaSession.getSessionToken()));
