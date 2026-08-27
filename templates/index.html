@@ -198,8 +198,14 @@
                 
                 <audio id="native-audio" autoplay></audio>
                 
-                <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90">
+                <button onclick="playPreviousSong()" class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90 mr-1">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button onclick="togglePlayPause()" id="play-pause-btn" class="w-12 h-12 rounded-full bg-amber-500 text-black flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)] transform transition active:scale-90 mx-1">
                     <i class="fa-solid fa-play text-xl ml-1"></i>
+                </button>
+                <button onclick="playNextSong()" class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90 ml-1">
+                    <i class="fa-solid fa-forward-step"></i>
                 </button>
             </div>
             
