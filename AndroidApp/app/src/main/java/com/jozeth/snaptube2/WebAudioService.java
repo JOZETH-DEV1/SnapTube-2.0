@@ -38,13 +38,17 @@ public class WebAudioService extends Service {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
             if (action.equals("ACTION_NEXT") && MainActivity.instance != null) {
-                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playNextSong();", null));
+                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if (!isAudioOnlyMode) toggleVideoMode(); playNextSong();", null));
             } else if (action.equals("ACTION_PREV") && MainActivity.instance != null) {
-                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playPreviousSong();", null));
+                MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if (!isAudioOnlyMode) toggleVideoMode(); playPreviousSong();", null));
             } else if (action.equals("ACTION_PAUSE")) {
-                pause();
+                if (MainActivity.instance != null) {
+                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if(!isAudioOnlyMode){document.getElementById('native-video').pause();}else{AndroidNative.pauseAudio();}", null));
+                } else { pause(); }
             } else if (action.equals("ACTION_PLAY")) {
-                resume();
+                if (MainActivity.instance != null) {
+                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if(!isAudioOnlyMode){document.getElementById('native-video').play();}else{AndroidNative.resumeAudio();}", null));
+                } else { resume(); }
             }
         }
         androidx.media.session.MediaButtonReceiver.handleIntent(mediaSession, intent);
@@ -97,13 +101,13 @@ public class WebAudioService extends Service {
             @Override
             public void onSkipToNext() {
                 if (MainActivity.instance != null) {
-                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playNextSong();", null));
+                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if (!isAudioOnlyMode) toggleVideoMode(); playNextSong();", null));
                 }
             }
             @Override
             public void onSkipToPrevious() {
                 if (MainActivity.instance != null) {
-                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("playPreviousSong();", null));
+                    MainActivity.instance.runOnUiThread(() -> MainActivity.instance.webView.evaluateJavascript("if (!isAudioOnlyMode) toggleVideoMode(); playPreviousSong();", null));
                 }
             }
         });

@@ -750,7 +750,7 @@
                                 // MODO VIDEO ACTIVO: Reproducir en la etiqueta <video>
                                 if (window.AndroidNative) window.AndroidNative.pauseAudio(); // Pausar audio de fondo
                                 const vidEl = document.getElementById('native-video');
-                                vidEl.src = data.url;
+                                vidEl.src = `/api/proxy_stream?id=${video.id}&audio_only=false`;
                                 vidEl.play().catch(e => console.error("Video auto-play prevented", e));
                                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
                                 playPauseBtn.style.pointerEvents = 'auto';

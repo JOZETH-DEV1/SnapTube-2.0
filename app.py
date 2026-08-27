@@ -98,16 +98,36 @@ from flask import Response, stream_with_context
 @app.route("/api/proxy_stream")
 def proxy_stream():
     video_id = request.args.get("id")
+    audio_only = request.args.get("audio_only", "true") == "true"
     if not video_id: return "No id", 400
     
-    ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'noplaylist': True}
+    format_selector = 'bestaudio/best' if audio_only else '22/18/best[ext=mp4]/best/bestaudio/best'
+    ydl_opts = {'format': format_selector, 'quiet': True, 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_id, download=False)
             url = info['url']
             
-        req = requests.get(url, stream=True)
-        return Response(stream_with_context(req.iter_content(chunk_size=1024*1024)), content_type=req.headers.get('content-type'))
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/115.0.0.0 Safari/537.36'}
+        
+        range_header = request.headers.get('Range', None)
+        if range_header:
+            headers['Range'] = range_header
+            
+        req = requests.get(url, headers=headers, stream=True)
+        
+        resp = Response(
+            stream_with_context(req.iter_content(chunk_size=1024*1024)),
+            status=req.status_code,
+            content_type=req.headers.get('content-type', 'video/mp4')
+        )
+        
+        # Copiar headers de respuesta críticos para video (Content-Length, Content-Range, Accept-Ranges)
+        for h in ['Content-Length', 'Content-Range', 'Accept-Ranges']:
+            if h in req.headers:
+                resp.headers[h] = req.headers[h]
+                
+        return resp
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
