@@ -318,6 +318,7 @@
         let preloadedBlobUrl = null;
         let preloadedVideoId = null;
         let isPreloading = false;
+        let isSkipping = false;
         let preloadedNextUrl = null;
         let preloadedNextId = null;
         const audioEl = document.getElementById('native-audio');
@@ -896,8 +897,10 @@
                 }
                 
                 // Auto-skip al faltar 1.5 segundos
-                if (audioEl.duration - audioEl.currentTime <= 1.5) {
+                if (audioEl.duration - audioEl.currentTime <= 1.5 && !isSkipping) {
+                    isSkipping = true;
                     playNextSong();
+                    setTimeout(() => isSkipping = false, 3000);
                 }
             }
         };
@@ -926,8 +929,10 @@
                         }
                     }
                     
-                    if (vidEl.duration - vidEl.currentTime <= 1.5) {
+                    if (vidEl.duration - vidEl.currentTime <= 1.5 && !isSkipping) {
+                        isSkipping = true;
                         playNextSong();
+                        setTimeout(() => isSkipping = false, 3000);
                     }
                 }
             }
