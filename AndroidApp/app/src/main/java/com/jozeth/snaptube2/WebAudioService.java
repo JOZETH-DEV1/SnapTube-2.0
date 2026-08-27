@@ -119,13 +119,25 @@ public class WebAudioService extends Service {
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
+
+        androidx.media.session.MediaButtonReceiver.handleIntent(mediaSession, new Intent());
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(currentTitle)
             .setContentText(currentArtist)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setStyle(new MediaStyle().setMediaSession(mediaSession.getSessionToken()));
+            .addAction(android.R.drawable.ic_media_previous, "Previous", androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS))
+            .addAction(
+                state == PlaybackStateCompat.STATE_PLAYING ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play,
+                "Play/Pause",
+                androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, state == PlaybackStateCompat.STATE_PLAYING ? PlaybackStateCompat.ACTION_PAUSE : PlaybackStateCompat.ACTION_PLAY)
+            )
+            .addAction(android.R.drawable.ic_media_next, "Next", androidx.media.session.MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT))
+            .setStyle(new MediaStyle()
+                .setShowActionsInCompactView(0, 1, 2)
+                .setMediaSession(mediaSession.getSessionToken()));
             
         startForeground(1, builder.build());
     }
