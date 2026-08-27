@@ -32,9 +32,9 @@ Installing Android SDK Platform 33 in /usr/local/lib/android/sdk/platforms/andro
 > Task :app:mapDebugSourceSetPaths
 > Task :app:generateDebugResources
 > Task :app:packageDebugResources
-> Task :app:parseDebugLocalResources
 > Task :app:createDebugCompatibleScreenManifests
 > Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
 > Task :app:mergeDebugResources
 
 > Task :app:processDebugMainManifest
@@ -49,13 +49,11 @@ Recommendation: remove package="com.jozeth.snaptube2" from the source AndroidMan
 > Task :app:mergeDebugAssets
 > Task :app:compressDebugAssets
 > Task :app:processDebugJavaRes NO-SOURCE
+> Task :app:mergeDebugJavaResource
 > Task :app:desugarDebugFileDependencies
-> Task :app:mergeDebugJniLibFolders
 > Task :app:processDebugManifestForPackage
 > Task :app:checkDebugDuplicateClasses
-> Task :app:mergeDebugJavaResource
 > Task :app:processDebugResources
-> Task :app:mergeExtDexDebug
 
 > Task :app:compileDebugJavaWithJavac FAILED
 /home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ')' expected
@@ -81,6 +79,8 @@ Recommendation: remove package="com.jozeth.snaptube2" from the source AndroidMan
                                                                                                         ^
 7 errors
 
+> Task :app:mergeExtDexDebug
+
 FAILURE: Build failed with an exception.
 
 * What went wrong:
@@ -91,5 +91,5 @@ Execution failed for task ':app:compileDebugJavaWithJavac'.
 > Run with --info option to get more log output.
 > Run with --scan to get full insights.
 
-BUILD FAILED in 1m 18s
-22 actionable tasks: 22 executed
+BUILD FAILED in 1m 12s
+21 actionable tasks: 21 executed
