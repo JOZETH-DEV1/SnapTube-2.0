@@ -1,0 +1,95 @@
+
+Welcome to Gradle 8.2!
+
+Here are the highlights of this release:
+ - Kotlin DSL: new reference documentation, assignment syntax by default
+ - Kotlin DSL is now the default with Gradle init
+ - Improved suggestions to resolve errors in console output
+
+For more details see https://docs.gradle.org/8.2/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/licenses
+License for package Android SDK Build-Tools 33.0.1 accepted.
+Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
+Installing Android SDK Build-Tools 33.0.1 in /usr/local/lib/android/sdk/build-tools/33.0.1
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+Checking the license for package Android SDK Platform 33 in /usr/local/lib/android/sdk/licenses
+License for package Android SDK Platform 33 accepted.
+Preparing "Install Android SDK Platform 33 (revision 3)".
+"Install Android SDK Platform 33 (revision 3)" ready.
+Installing Android SDK Platform 33 in /usr/local/lib/android/sdk/platforms/android-33
+"Install Android SDK Platform 33 (revision 3)" complete.
+"Install Android SDK Platform 33 (revision 3)" finished.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:javaPreCompileDebug
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:parseDebugLocalResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:mergeDebugResources
+
+> Task :app:processDebugMainManifest
+package="com.jozeth.snaptube2" found in source AndroidManifest.xml: /home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.jozeth.snaptube2" from the source AndroidManifest.xml: /home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/AndroidManifest.xml.
+
+> Task :app:processDebugManifest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:processDebugJavaRes NO-SOURCE
+> Task :app:desugarDebugFileDependencies
+> Task :app:mergeDebugJniLibFolders
+> Task :app:processDebugManifestForPackage
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugJavaResource
+> Task :app:processDebugResources
+> Task :app:mergeExtDexDebug
+
+> Task :app:compileDebugJavaWithJavac FAILED
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ')' expected
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                  ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ';' expected
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                            ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: not a statement
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                                             ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ';' expected
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                                                  ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ';' expected
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                                                                ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: not a statement
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                                                                                 ^
+/home/runner/work/SnapTube-2.0/SnapTube-2.0/AndroidApp/app/src/main/java/com/jozeth/snaptube2/MainActivity.java:102: error: ';' expected
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                                                                                                        ^
+7 errors
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1m 18s
+22 actionable tasks: 22 executed
