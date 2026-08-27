@@ -749,14 +749,16 @@
                             if (!isAudioOnlyMode) {
                                 // MODO VIDEO ACTIVO: Reproducir en la etiqueta <video>
                                 if (window.AndroidNative) window.AndroidNative.pauseAudio(); // Pausar audio de fondo
+                                if (skipPlayback) { /* Ya reproduciendo */ } else {
                                 const vidEl = document.getElementById('native-video');
                                 vidEl.src = `/api/proxy_stream?id=${video.id}&audio_only=false`;
                                 vidEl.play().catch(e => console.error("Video auto-play prevented", e));
                                 playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
                                 playPauseBtn.style.pointerEvents = 'auto';
+                            }
                             } else {
                                 // MODO AUDIO ACTIVO: Reproducir en segundo plano
-                                if (window.AndroidNative) {
+                                if (skipPlayback) { /* Ya se está reproduciendo gracias al preloader */ } else if (window.AndroidNative) {
                                     console.log("Usando reproductor NATIVO de Android!");
                                     window.AndroidNative.playAudio(data.url, video.title, video.channel);
                                     playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
@@ -788,7 +790,22 @@
             if (!currentQueue || currentQueue.length === 0) return;
             let nextIndex = currentQueueIndex + 1;
             if (nextIndex > 0 && nextIndex < currentQueue.length) {
-                startStreaming(currentQueue[nextIndex], false, nextIndex);
+                let nextVideo = currentQueue[nextIndex];
+                if (preloadedNextId === nextVideo.id && preloadedNextUrl && !window.AndroidNative) {
+                    // Synchronous play for web browsers to bypass auto-play block!
+                    if (isAudioOnlyMode) {
+                        audioEl.src = preloadedNextUrl;
+                        audioEl.play().catch(e => console.error("Web audio autoplay prevented", e));
+                    } else {
+                        const vidEl = document.getElementById('native-video');
+                        vidEl.src = preloadedNextUrl;
+                        vidEl.play().catch(e => console.error("Web video autoplay prevented", e));
+                    }
+                    // Continue UI state update async
+                    startStreaming(nextVideo, false, nextIndex, true);
+                } else {
+                    startStreaming(nextVideo, false, nextIndex);
+                }
             } else {
                 playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
             }
@@ -901,6 +918,20 @@
                 if (vidEl && vidEl.duration > 0) {
                     const pct = (vidEl.currentTime / vidEl.duration) * 100;
                     document.getElementById('audio-progress').style.width = pct + '%';
+                    
+                    if (vidEl.duration - vidEl.currentTime < 15 && !isPreloading) {
+                        let nextIndex = currentQueueIndex + 1;
+                        if (currentQueue && nextIndex < currentQueue.length) {
+                            let nextVideo = currentQueue[nextIndex];
+                            if (preloadedNextId !== nextVideo.id) {
+                                isPreloading = true;
+                                // Para el proxy_stream, solo precalculamos la URL
+                                preloadedNextUrl = `/api/proxy_stream?id=${nextVideo.id}&audio_only=false`;
+                                preloadedNextId = nextVideo.id;
+                                isPreloading = false;
+                            }
+                        }
+                    }
                 }
             }
         }, 1000);
