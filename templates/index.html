@@ -746,13 +746,20 @@
                                 playNextSong();
                                 return;
                             }
-                            audioEl.src = data.url;
-                            const playPromise = audioEl.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(e => {
-                                    console.error("Auto-play prevented", e);
-                                    playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
-                                });
+                            if (window.AndroidNative) {
+                                console.log("Usando reproductor NATIVO de Android!");
+                                window.AndroidNative.playAudio(data.url, video.title, video.channel);
+                                playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
+                                playPauseBtn.style.pointerEvents = 'auto';
+                            } else {
+                                audioEl.src = data.url;
+                                const playPromise = audioEl.play();
+                                if (playPromise !== undefined) {
+                                    playPromise.catch(e => {
+                                        console.error("Auto-play prevented", e);
+                                        playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                                    });
+                                }
                             }
                         }).catch(console.error);
                 }

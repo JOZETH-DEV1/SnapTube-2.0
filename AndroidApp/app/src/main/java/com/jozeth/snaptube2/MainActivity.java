@@ -1,11 +1,14 @@
 package com.jozeth.snaptube2;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
+import android.os.IBinder;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -13,19 +16,51 @@ import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-    private WebView webView;
-    private PowerManager.WakeLock wakeLock;
+    public WebView webView;
+    public static MainActivity instance;
+    private WebAudioService audioService;
+    private boolean isBound = false;
 
-    @SuppressLint({"SetJavaScriptEnabled", "WakelockTimeout"})
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            WebAudioService.LocalBinder binder = (WebAudioService.LocalBinder) service;
+            audioService = binder.getService();
+            isBound = true;
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            isBound = false;
+        }
+    };
+
+    class WebAppInterface {
+        Context mContext;
+        WebAppInterface(Context c) { mContext = c; }
+        
+        @JavascriptInterface
+        public void playAudio(String url, String title, String artist) {
+            if (isBound && audioService != null) {
+                audioService.playUrl(url, title, artist);
+            }
+        }
+        
+        @JavascriptInterface
+        public void pauseAudio() {
+            if (isBound && audioService != null) audioService.pause();
+        }
+        
+        @JavascriptInterface
+        public void resumeAudio() {
+            if (isBound && audioService != null) audioService.resume();
+        }
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (powerManager != null) {
-            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SnapTube2::AudioWakeLock");
-            wakeLock.acquire();
-        }
+        instance = this;
         
         webView = new WebView(this);
         setContentView(webView);
@@ -35,25 +70,29 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         
+        webView.addJavascriptInterface(new WebAppInterface(this), "AndroidNative");
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         
         webView.loadUrl("http://127.0.0.1:5000");
         
-        Intent serviceIntent = new Intent(this, KeepAliveService.class);
+        Intent intent = new Intent(this, WebAudioService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
+            startForegroundService(intent);
         } else {
-            startService(serviceIntent);
+            startService(intent);
         }
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
     
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release();
+        if (isBound) {
+            unbindService(connection);
+            isBound = false;
         }
+        instance = null;
     }
     
     @Override
