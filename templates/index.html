@@ -178,7 +178,7 @@
     <div id="global-player" class="global-player fixed bottom-[70px] left-0 right-0 z-40 flex flex-col items-center px-4 py-3 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
         <div class="max-w-3xl w-full">
             <div id="video-wrapper" class="w-full aspect-video bg-black rounded-xl overflow-hidden hidden mb-3 border border-gray-700">
-                <video id="native-video" class="w-full h-full object-contain" controls onended="playNextSong()" onplaying="if(!isAudioOnlyMode) { document.getElementById('play-pause-btn').innerHTML = '<i class=\'fa-solid fa-pause text-xl\'></i>'; document.getElementById('play-pause-btn').style.pointerEvents = 'auto'; }" onpause="if(!isAudioOnlyMode) { document.getElementById('play-pause-btn').innerHTML = '<i class=\'fa-solid fa-play text-xl ml-1\'></i>'; }"></video>
+                <video id="native-video" class="w-full h-full object-contain" controls></video>
             </div>
             
             <div class="flex items-center gap-4">
@@ -308,8 +308,11 @@
         let preloadedNextUrl = null;
         let preloadedNextId = null;
         const audioEl = document.getElementById('native-audio');
-
         const videoEl = document.getElementById('native-video');
+        videoEl.onended = playNextSong;
+        videoEl.onplaying = () => { if(!isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`; playPauseBtn.style.pointerEvents = 'auto'; } };
+        videoEl.onpause = () => { if(!isAudioOnlyMode) { playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`; } };
+
         const playPauseBtn = document.getElementById('play-pause-btn');
         const input = document.getElementById('search-input');
         const resultsDiv = document.getElementById('results');
@@ -676,7 +679,7 @@
             playPauseBtn.innerHTML = `<i class="fa-solid fa-spinner spin text-xl"></i>`;
             playPauseBtn.style.pointerEvents = 'none';
 
-            if (updateQueue && currentMode === 'player') {
+            if (updateQueue && currentMode !== 'playlists') {
                 currentQueue = [video]; 
                 fetch(`/api/radio?channel=${encodeURIComponent(video.channel || video.title)}`)
                     .then(r => r.json())
