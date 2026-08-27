@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
-from ytmusicapi import YTMusic
 import yt_dlp
 import os
 import threading
@@ -110,104 +109,80 @@ def proxy_stream():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/search")
-def search():
-    query = request.args.get("q", "")
-    if not query: return jsonify([])
 
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
-    
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            result = ydl.extract_info(f"ytsearch50:{query}", download=False)
-            if 'entries' in result:
-                videos = []
-                seen_titles = set()
-                downloaded_files = get_downloaded_files()
-                downloaded_basenames = [os.path.splitext(f)[0].lower() for f in downloaded_files]
-                
-                for entry in result['entries']:
-                    title = entry.get('title', '')
-                    if is_duplicate(title, seen_titles): continue
-                    
-                    safe_title = title.replace('/', '_').replace('\\', '_').replace(':', ' -').replace('"', "'")
-                    videos.append({
-                        'id': entry.get('id'),
-                        'title': title,
-                        'channel': entry.get('uploader'),
-                        'duration': entry.get('duration'),
-                        'url': entry.get('url'),
-                        'is_downloaded': safe_title.lower() in downloaded_basenames
-                    })
-                return jsonify(videos)
-            return jsonify([])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
-import random
+
 @app.route("/api/fyp")
 def fyp():
+    ydl_opts = {'extract_flat': True, 'quiet': True, 'playlistend': 20}
     try:
-        import os
-        from ytmusicapi import YTMusic
-        if os.path.exists('oauth.json'):
-            ytmusic = YTMusic('oauth.json')
-            home = ytmusic.get_home()
-            all_videos = []
-            seen = set()
-            for section in home:
-                if 'contents' in section:
-                    for item in section['contents']:
-                        vid = item.get('videoId')
-                        if vid and vid not in seen:
-                            seen.add(vid)
-                            all_videos.append({
-                                'id': vid,
-                                'title': item.get('title', ''),
-                                'channel': ', '.join([a.get('name', '') for a in item.get('artists', [])]) if item.get('artists') else 'Unknown',
-                                'is_downloaded': False
-                            })
-            if all_videos:
-                return jsonify(all_videos)
-    except Exception as e:
-        print("YTMusic FYP error:", e)
-
-    # Fallback
-    history = load_history()
-    queries = ["top hits musica actual", "canciones mas escuchadas", "musica viral"]
-    if history:
-        recent = history[-5:]
-        titles = []
-        for v in recent:
-            t = v.get('title', '')
-            t = re.sub(r'\(.*?\)|\[.*?\]', '', t).strip()
-            if t: titles.append(t)
-        if titles:
-            import random
-            random.shuffle(titles)
-            queries = [f"{t} mix musica" for t in titles[:2]]
-            
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
-    
-    try:
-        all_videos = []
-        seen_titles = set()
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            for q in queries:
-                res = ydl.extract_info(f"ytsearch15:{q}", download=False)
-                if 'entries' in res:
-                    for entry in res['entries']:
-                        if not entry: continue
-                        t = entry.get('title', '')
-                        if t in seen_titles: continue
-                        seen_titles.add(t)
-                        all_videos.append({
-                            'id': entry.get('id'),
-                            'title': t,
-                            'channel': entry.get('uploader', 'Unknown'),
-                            'is_downloaded': False
-                        })
-        return jsonify(all_videos)
+            info = ydl.extract_info("https://www.youtube.com/feed/trending", download=False)
+        videos = []
+        for entry in info.get('entries', []):
+            if entry and entry.get('id'):
+                videos.append({
+                    "id": entry["id"],
+                    "title": entry.get("title", ""),
+                    "channel": entry.get("uploader", ""),
+                    "thumb": f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg",
+                    "duration": entry.get("duration", 0)
+                })
+        return jsonify(videos)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/search")
+def search():
+    query = request.args.get("q")
+    if not query: return jsonify([])
+    ydl_opts = {'extract_flat': True, 'quiet': True, 'playlistend': 20}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch20:{query}", download=False)
+        videos = []
+        for entry in info.get('entries', []):
+            if entry and entry.get('id'):
+                videos.append({
+                    "id": entry["id"],
+                    "title": entry.get("title", ""),
+                    "channel": entry.get("uploader", ""),
+                    "thumb": f"https://i.ytimg.com/vi/{entry['id']}/hqdefault.jpg",
+                    "duration": entry.get("duration", 0)
+                })
+        return jsonify(videos)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/video_details")
+def video_details():
+    video_id = request.args.get("id")
+    if not video_id: return jsonify({"error": "No ID"}), 400
+    ydl_opts = {'quiet': True, 'noplaylist': True}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_id, download=False)
+        formats = []
+        for f in info.get('formats', []):
+            if f.get('vcodec') != 'none' and f.get('acodec') != 'none':
+                height = f.get('height', 0)
+                formats.append({"format_id": f['format_id'], "ext": f['ext'], "resolution": f"{height}p (Con Audio)", "type": "video", "filesize": f.get('filesize', 0)})
+            elif f.get('vcodec') != 'none' and f.get('acodec') == 'none':
+                height = f.get('height', 0)
+                formats.append({"format_id": f['format_id'], "ext": f['ext'], "resolution": f"{height}p (Sin Audio)", "type": "video_only", "filesize": f.get('filesize', 0)})
+            elif f.get('vcodec') == 'none' and f.get('acodec') != 'none':
+                abr = f.get('abr', 0)
+                formats.append({"format_id": f['format_id'], "ext": f['ext'], "resolution": f"Audio {abr}kbps", "type": "audio", "filesize": f.get('filesize', 0)})
+        combined = [f for f in formats if f['type'] == 'video']
+        combined = sorted(combined, key=lambda x: int(x['resolution'].split('p')[0]) if 'p' in x['resolution'] else 0, reverse=True)
+        audio = [f for f in formats if f['type'] == 'audio']
+        audio = sorted(audio, key=lambda x: int(x['resolution'].split(' ')[1].replace('kbps','')) if 'kbps' in x['resolution'] else 0, reverse=True)
+        return jsonify({
+            "id": info.get("id"),
+            "title": info.get("title"),
+            "thumb": info.get("thumbnail"),
+            "formats": combined[:3] + audio[:2]
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
