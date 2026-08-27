@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,10 +29,20 @@ jobs:
         gradle-version: 8.2
       
     - name: Build APK
-      run: gradle assembleDebug
+      run: gradle assembleDebug > build_log.txt 2>&1
       
     - name: Upload APK
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: SnapTube-2.0-APK
         path: AndroidApp/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Commit Logs on Failure
+      if: failure()
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add build_log.txt
+        git commit -m "Upload build log"
+        git push
