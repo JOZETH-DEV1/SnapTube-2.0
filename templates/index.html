@@ -764,7 +764,7 @@
                                     playPauseBtn.innerHTML = `<i class="fa-solid fa-pause text-xl"></i>`;
                                     playPauseBtn.style.pointerEvents = 'auto';
                                 } else {
-                                    audioEl.src = data.url;
+                                    audioEl.src = `/api/proxy_stream?id=${video.id}&audio_only=true`;
                                     const playPromise = audioEl.play();
                                     if (playPromise !== undefined) {
                                         playPromise.catch(e => {

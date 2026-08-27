@@ -108,7 +108,7 @@ def proxy_stream():
             info = ydl.extract_info(video_id, download=False)
             url = info['url']
             
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/115.0.0.0 Safari/537.36'}
+        headers = info.get('http_headers', {})
         
         range_header = request.headers.get('Range', None)
         if range_header:
