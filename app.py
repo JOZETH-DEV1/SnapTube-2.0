@@ -3,6 +3,7 @@ import yt_dlp
 import os
 import threading
 import json
+import random
 
 app = Flask(__name__)
 
@@ -67,7 +68,8 @@ def save_history(data):
 
 import re
 def is_duplicate(title, seen_normalized):
-    t = title.lower()
+    if not title: return True
+    t = str(title).lower()
     t = re.sub(r'\(.*?\)|\[.*?\]', '', t)
     t = re.sub(r'[^a-z0-9]', '', t)
     if len(t) < 5: return False
