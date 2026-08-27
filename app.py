@@ -91,6 +91,25 @@ def manifest():
 def service_worker():
     return send_from_directory('static', 'sw.js', mimetype='application/javascript')
 
+
+import requests
+from flask import Response, stream_with_context
+@app.route("/api/proxy_stream")
+def proxy_stream():
+    video_id = request.args.get("id")
+    if not video_id: return "No id", 400
+    
+    ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'noplaylist': True}
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_id, download=False)
+            url = info['url']
+            
+        req = requests.get(url, stream=True)
+        return Response(stream_with_context(req.iter_content(chunk_size=1024*1024)), content_type=req.headers.get('content-type'))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/search")
 def search():
     query = request.args.get("q", "")

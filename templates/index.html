@@ -296,6 +296,9 @@
         let isPrefetching = false;
 
         let isAudioOnlyMode = true;
+        let preloadedBlobUrl = null;
+        let preloadedVideoId = null;
+        let isPreloading = false;
         let preloadedNextUrl = null;
         let preloadedNextId = null;
         const audioEl = document.getElementById('native-audio');
@@ -721,23 +724,38 @@
                 }
                 
                 
-                fetch(`/api/stream?id=${video.id}&audio_only=true`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if(data.error) {
-                            console.error(data.error);
-                            playNextSong();
-                            return;
-                        }
-                        audioEl.src = data.url;
-                        const playPromise = audioEl.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(e => {
-                                console.error("Auto-play prevented", e);
-                                playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
-                            });
-                        }
-                    }).catch(console.error);
+
+                if (preloadedVideoId === video.id && preloadedBlobUrl) {
+                    console.log("Inyectando Blob al instante!");
+                    audioEl.src = preloadedBlobUrl;
+                    const playPromise = audioEl.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            console.error("Auto-play prevented", e);
+                            playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                        });
+                    }
+                    preloadedBlobUrl = null;
+                } else {
+                    console.log("Haciendo fetch normal...");
+                    fetch(`/api/stream?id=${video.id}&audio_only=true`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if(data.error) {
+                                console.error(data.error);
+                                playNextSong();
+                                return;
+                            }
+                            audioEl.src = data.url;
+                            const playPromise = audioEl.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(e => {
+                                    console.error("Auto-play prevented", e);
+                                    playPauseBtn.innerHTML = `<i class="fa-solid fa-play text-xl ml-1"></i>`;
+                                });
+                            }
+                        }).catch(console.error);
+                }
                 
             } else {
                 audioEl.pause();
@@ -832,6 +850,31 @@
             if(audioEl.duration && isAudioOnlyMode) {
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
+                
+                // BLOB PRELOAD MAGIC (SPOTIFY STYLE)
+                if (audioEl.duration - audioEl.currentTime < 25 && !isPreloading) {
+                    if (currentQueue && currentQueue.length > 0) {
+                        let nextIndex = currentQueueIndex + 1;
+                        if (nextIndex > 0 && nextIndex < currentQueue.length) {
+                            let nextVideo = currentQueue[nextIndex];
+                            if (preloadedVideoId !== nextVideo.id) {
+                                isPreloading = true;
+                                preloadedVideoId = nextVideo.id;
+                                console.log("Empezando a precargar cancion completa en RAM...");
+                                fetch(`/api/proxy_stream?id=${nextVideo.id}`)
+                                    .then(r => r.blob())
+                                    .then(blob => {
+                                        preloadedBlobUrl = URL.createObjectURL(blob);
+                                        isPreloading = false;
+                                        console.log("Cancion precargada lista en memoria.");
+                                    }).catch(e => {
+                                        console.error("Preload error", e);
+                                        isPreloading = false;
+                                    });
+                            }
+                        }
+                    }
+                }
             }
         };
 
