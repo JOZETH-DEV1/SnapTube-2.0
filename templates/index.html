@@ -900,7 +900,32 @@
         }, 1000);
 
         // DESCARGA
-        function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); setTimeout(() => { document.getElementById('config-modal').classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.remove('translate-y-full'); }, 10); }
+        function openConfigModal() { 
+            if(!currentStreamVideo) return;
+            document.getElementById('dl-title').textContent = "Buscando calidades...";
+            document.getElementById('dl-type').innerHTML = '<option>Cargando...</option>';
+            document.getElementById('config-modal').classList.remove('hidden'); 
+            setTimeout(() => { document.getElementById('config-modal').classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.remove('translate-y-full'); }, 10); 
+            
+            fetch(`/api/video_details?id=${currentStreamVideo.id}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('dl-title').textContent = data.title || currentStreamVideo.title;
+                    let html = '';
+                    if (data.formats) {
+                        data.formats.forEach(f => {
+                            let size = f.filesize ? ` (${(f.filesize/1024/1024).toFixed(1)}MB)` : '';
+                            html += `<option value="${f.format_id}|${f.type}">${f.resolution} - ${f.ext}${size}</option>`;
+                        });
+                    } else {
+                        html = '<option value="audio|audio">Audio MP3</option><option value="video|video">Video 720p</option>';
+                    }
+                    document.getElementById('dl-type').innerHTML = html;
+                }).catch(e => {
+                    document.getElementById('dl-title').textContent = currentStreamVideo.title;
+                    document.getElementById('dl-type').innerHTML = '<option value="audio|audio">Audio MP3</option><option value="video|video">Video 720p</option>';
+                });
+        }
         function closeConfigModal() { document.getElementById('config-modal').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('modal-content').classList.add('translate-y-full'); setTimeout(() => document.getElementById('config-modal').classList.add('hidden'), 300); }
 
         async function confirmDownload() {
