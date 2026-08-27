@@ -82,6 +82,11 @@ public class WebAudioService extends Service {
                 });
             }
         });
+        
+        mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+            System.err.println("MediaPlayer Error: " + what + " " + extra);
+            return true; // True indicates we handled the error
+        });
 
         mediaSession = new MediaSessionCompat(this, "WebAudioService");
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
