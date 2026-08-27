@@ -881,29 +881,23 @@
                 const pct = (audioEl.currentTime / audioEl.duration) * 100;
                 document.getElementById('audio-progress').style.width = pct + '%';
                 
-                // BLOB PRELOAD MAGIC (SPOTIFY STYLE)
-                if (audioEl.duration - audioEl.currentTime < 25 && !isPreloading) {
-                    if (currentQueue && currentQueue.length > 0) {
-                        let nextIndex = currentQueueIndex + 1;
-                        if (nextIndex > 0 && nextIndex < currentQueue.length) {
-                            let nextVideo = currentQueue[nextIndex];
-                            if (preloadedVideoId !== nextVideo.id) {
-                                isPreloading = true;
-                                preloadedVideoId = nextVideo.id;
-                                console.log("Empezando a precargar cancion completa en RAM...");
-                                fetch(`/api/proxy_stream?id=${nextVideo.id}`)
-                                    .then(r => r.blob())
-                                    .then(blob => {
-                                        preloadedBlobUrl = URL.createObjectURL(blob);
-                                        isPreloading = false;
-                                        console.log("Cancion precargada lista en memoria.");
-                                    }).catch(e => {
-                                        console.error("Preload error", e);
-                                        isPreloading = false;
-                                    });
-                            }
+                // Preload URL (No Blob)
+                if (audioEl.duration - audioEl.currentTime < 15 && !isPreloading) {
+                    let nextIndex = currentQueueIndex + 1;
+                    if (currentQueue && nextIndex < currentQueue.length) {
+                        let nextVideo = currentQueue[nextIndex];
+                        if (preloadedNextId !== nextVideo.id) {
+                            isPreloading = true;
+                            preloadedNextUrl = `/api/proxy_stream?id=${nextVideo.id}&audio_only=true`;
+                            preloadedNextId = nextVideo.id;
+                            isPreloading = false;
                         }
                     }
+                }
+                
+                // Auto-skip al faltar 1.5 segundos
+                if (audioEl.duration - audioEl.currentTime <= 1.5) {
+                    playNextSong();
                 }
             }
         };
@@ -925,12 +919,15 @@
                             let nextVideo = currentQueue[nextIndex];
                             if (preloadedNextId !== nextVideo.id) {
                                 isPreloading = true;
-                                // Para el proxy_stream, solo precalculamos la URL
                                 preloadedNextUrl = `/api/proxy_stream?id=${nextVideo.id}&audio_only=false`;
                                 preloadedNextId = nextVideo.id;
                                 isPreloading = false;
                             }
                         }
+                    }
+                    
+                    if (vidEl.duration - vidEl.currentTime <= 1.5) {
+                        playNextSong();
                     }
                 }
             }
