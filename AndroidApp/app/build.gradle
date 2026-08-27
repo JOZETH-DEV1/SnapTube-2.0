@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.jozeth.snaptube2'
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.jozeth.snaptube2"
         minSdk 24
-        targetSdk 34
+        targetSdk 33
         versionCode 1
         versionName "2.0"
     }
