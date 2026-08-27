@@ -97,10 +97,12 @@ public class MainActivity extends AppCompatActivity {
     
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        // Enviar señal al Javascript para ver si puede "ir atrás" en la UI de una sola página
+        webView.evaluateJavascript("if (typeof goBackUI === 'function') { goBackUI(); } else { 'NO_HANDLER'; }", value -> {
+            if (""NO_HANDLER"".equals(value) || ""CANNOT_GO_BACK"".equals(value) || "null".equals(value)) {
+                // Si estamos en la raíz, simplemente mandar la app a segundo plano sin destruirla
+                moveTaskToBack(true);
+            }
+        });
     }
 }
