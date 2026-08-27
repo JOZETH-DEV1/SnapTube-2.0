@@ -117,7 +117,7 @@ def fyp():
     ydl_opts = {'extract_flat': True, 'quiet': True, 'playlistend': 20}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info("https://www.youtube.com/feed/trending", download=False)
+            info = ydl.extract_info("ytsearch20:videos recomendados virales", download=False)
         videos = []
         for entry in info.get('entries', []):
             if entry and entry.get('id'):
@@ -189,7 +189,7 @@ def video_details():
 @app.route("/api/radio")
 def radio():
     channel = request.args.get("channel", "")
-    ydl_opts = {'format': 'bestaudio/best', 'extract_flat': True, 'quiet': True, 'js_runtimes': {'node': {}}, 'remote_components': ['ejs:github'], 'noplaylist': True}
+    ydl_opts = {'extract_flat': True, 'quiet': True, 'noplaylist': True}
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             # Buscar mix del artista, y también canciones populares generales
@@ -197,8 +197,8 @@ def radio():
             result2 = ydl.extract_info(f"ytsearch10:{channel} mix", download=False)
             
             entries = []
-            if 'entries' in result1: entries.extend(result1['entries'])
-            if 'entries' in result2: entries.extend(result2['entries'])
+            if result1 and 'entries' in result1: entries.extend(result1['entries'])
+            if result2 and 'entries' in result2: entries.extend(result2['entries'])
             
             videos = []
             seen_titles = set()
