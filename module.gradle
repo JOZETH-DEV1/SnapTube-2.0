@@ -5,5 +5,5 @@ ext {
     moduleAuthor = "Perfare"
     moduleDescription = "Il2CppDumper Zygisk version (com.olzhas.carparking.multyplayer)."
     moduleVersion = "v1.2.0"
-    moduleVersionCode = 1
+    moduleVersionCode = 2
 }
