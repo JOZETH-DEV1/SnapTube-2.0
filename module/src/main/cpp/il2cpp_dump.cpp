@@ -345,6 +345,10 @@ void il2cpp_api_init(void *handle) {
 
 void il2cpp_dump(const char *outDir) {
     LOGI("dumping...");
+    if (il2cpp_domain_get == nullptr || il2cpp_domain_get_assemblies == nullptr || il2cpp_assembly_get_image == nullptr) {
+        LOGE("CRITICAL: il2cpp exports are missing (stripped)! Dumping cannot proceed.");
+        return;
+    }
     size_t size;
     auto domain = il2cpp_domain_get();
     auto assemblies = il2cpp_domain_get_assemblies(domain, &size);
